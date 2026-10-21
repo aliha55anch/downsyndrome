@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Activities | Little Steps</title>
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+  <div id="navbar"></div>
+
+  <section class="page-title">
+    <div class="container">
+      <h1>Home Activities</h1>
+      <p>Choose your child's age and what you want to work on</p>
+    </div>
+  </section>
+
+  <main class="container section">
+
+    <!-- Filters -->
+    <div class="filter-bar">
+      <div class="form-row">
+        <div>
+          <label for="age-filter">Age group</label>
+          <select id="age-filter"></select>
+        </div>
+        <div>
+          <label for="area-filter">Area</label>
+          <select id="area-filter"></select>
+        </div>
+      </div>
+    </div>
+
+    <p id="result-count" class="muted"></p>
+
+    <!-- Activity cards are added here by activities.js -->
+    <div class="grid" id="activity-list"></div>
+
+    <div class="disclaimer">
+      These activities are general guidance, not medical advice or therapy. If you have concerns about your child's development, please talk to a qualified therapist.
+    </div>
+  </main>
+
+  <div id="footer"></div>
+
+  <script src="assets/js/data.js"></script>
+  <script src="assets/js/main.js"></script>
+  <script src="assets/js/activities.js"></script>
+</body>
+</html>

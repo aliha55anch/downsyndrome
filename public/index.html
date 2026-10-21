@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Little Steps | Home</title>
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+  <!-- Menu is added here by main.js -->
+  <div id="navbar"></div>
+
+  <!-- Top banner -->
+  <section class="hero">
+    <div class="container hero-inner">
+      <div class="hero-text">
+        <h1>Every child learns at their own pace</h1>
+        <p>Simple home activities, clear information and trusted doctors for families of children with Down syndrome.</p>
+        <div class="btn-row">
+          <a class="btn btn-yellow" href="activities.html">Find Activities</a>
+          <a class="btn btn-outline" href="doctors.html">Find a Doctor</a>
+        </div>
+      </div>
+      <div class="hero-art">🧸🌈<br>👨‍👩‍👧</div>
+    </div>
+  </section>
+
+  <main class="container">
+
+    <!-- "What should I do next?" box -->
+    <section class="section">
+      <div class="form-box">
+        <h2>What should we do next?</h2>
+        <p>Tell us your child's age and what you want to work on. We will show matching activities.</p>
+        <form id="next-form">
+          <div class="form-row">
+            <div>
+              <label for="age-select">Child's age</label>
+              <select id="age-select"></select>
+            </div>
+            <div>
+              <label for="area-select">What to work on</label>
+              <select id="area-select"></select>
+            </div>
+          </div>
+          <button class="btn btn-blue" type="submit">Show activities</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- How it works -->
+    <section class="section">
+      <h2 class="center">How it works</h2>
+      <div class="grid">
+        <div class="card">
+          <div class="step-number">1</div>
+          <h3>Pick your child's age</h3>
+          <p>Each age has its own activities that suit your child.</p>
+        </div>
+        <div class="card">
+          <div class="step-number">2</div>
+          <h3>Practice at home</h3>
+          <p>Follow easy steps. Most activities take 5 to 15 minutes.</p>
+        </div>
+        <div class="card">
+          <div class="step-number">3</div>
+          <h3>Keep track</h3>
+          <p>Create a free account and mark each activity as done.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Age groups -->
+    <section class="section">
+      <h2 class="center">Choose an age group</h2>
+      <div class="grid" id="age-list"></div>
+    </section>
+
+    <!-- Some activities -->
+    <section class="section">
+      <h2 class="center">Activities to try</h2>
+      <div class="grid" id="featured"></div>
+      <p class="center"><a class="btn btn-blue" href="activities.html">See all activities</a></p>
+    </section>
+
+    <!-- Doctor box -->
+    <section class="section">
+      <div class="card center">
+        <h2>Need help from a professional?</h2>
+        <p>Find speech therapists, physiotherapists, special educators and more.</p>
+        <a class="btn btn-yellow" href="doctors.html">Find a Doctor</a>
+      </div>
+    </section>
+
+    <div class="disclaimer">
+      This website gives general guidance, not medical advice. If you have concerns about your child's development, please talk to a qualified doctor or therapist.
+    </div>
+  </main>
+
+  <div id="footer"></div>
+
+  <script src="assets/js/data.js"></script>
+  <script src="assets/js/main.js"></script>
+  <script src="assets/js/index.js"></script>
+</body>
+</html>

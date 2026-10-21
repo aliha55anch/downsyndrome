@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Manage Activities | Little Steps</title>
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+  <div id="navbar"></div>
+
+  <section class="page-title">
+    <div class="container">
+      <h1>Manage Activities</h1>
+      <p>Add, change or remove home activities</p>
+    </div>
+  </section>
+
+  <main class="container section">
+
+    <!-- Table of activities is added here by admin_activities.js -->
+    <div id="activity-table"></div>
+
+    <div class="form-box">
+      <h2 id="form-title">Add an activity</h2>
+
+      <form id="activity-form">
+        <div class="form-row">
+          <div>
+            <label for="title">Title</label>
+            <input type="text" id="title">
+          </div>
+          <div>
+            <label for="area">Area</label>
+            <select id="area"></select>
+          </div>
+          <div>
+            <label for="ageGroup">Age group</label>
+            <select id="ageGroup"></select>
+          </div>
+          <div>
+            <label for="minutes">Minutes</label>
+            <input type="number" id="minutes" min="1">
+          </div>
+          <div>
+            <label for="frequency">How often</label>
+            <input type="text" id="frequency" placeholder="For example: Every day">
+          </div>
+          <div>
+            <label for="goal">Goal</label>
+            <input type="text" id="goal">
+          </div>
+        </div>
+
+        <label for="materials">What you need (one item on each line)</label>
+        <textarea id="materials"></textarea>
+
+        <label for="steps">Steps (one step on each line)</label>
+        <textarea id="steps"></textarea>
+
+        <label for="progress">What progress looks like</label>
+        <textarea id="progress"></textarea>
+
+        <div class="btn-row">
+          <button class="btn btn-blue" type="submit">Save activity</button>
+          <button class="btn btn-outline" type="button" id="cancel-btn">Clear form</button>
+        </div>
+      </form>
+
+      <!-- Success or error message appears here -->
+      <div id="form-message"></div>
+    </div>
+  </main>
+
+  <div id="footer"></div>
+
+  <script src="assets/js/data.js"></script>
+  <script src="assets/js/main.js"></script>
+  <script src="assets/js/admin_activities.js"></script>
+</body>
+</html>
