@@ -1,4 +1,4 @@
-# Down Syndrome Children Support Platform
+﻿# Down Syndrome Children Support Platform
 
 A web-based support platform designed to help parents and caregivers of children with Down syndrome access age-based developmental guidance, home activities, early-learning resources, progress tracking, and professional support.
 
@@ -43,60 +43,50 @@ Role permissions should be finalised during requirements analysis.
 
 ## Getting Started
 
-The application is under development, so installation steps may change. Once the Laravel application and database configuration are available:
+This repository is a Laravel 12 application in the same project as the existing HTML/CSS/JavaScript frontend. The current pages and assets remain in `public/`; Laravel handles application routes, backend logic, and database access.
 
-1. Install a compatible PHP version, Composer, and MySQL.
-2. Clone the repository:
-   ```bash
-   git clone <repository-url>
-   ```
-3. Open the project directory:
-   ```bash
-   cd <project-folder>
-   ```
-4. Install PHP dependencies:
+Prerequisites: PHP 8.2+, Composer, MySQL, and the PHP `pdo_mysql` extension.
+
+1. Install Laravel dependencies from the project root:
    ```bash
    composer install
    ```
-5. Create a local environment file:
-   ```bash
-   cp .env.example .env
+2. Copy `.env.example` to `.env` and set `DB_DATABASE`, `DB_USERNAME`, and `DB_PASSWORD` to match your MySQL setup.
+3. Create the MySQL database if it does not exist:
+   ```sql
+   CREATE DATABASE down_syndrome_support CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
    ```
-   On Windows, you can copy `.env.example` and rename the copy to `.env`.
-6. Create a MySQL database and update the database settings in `.env`.
-7. Generate the Laravel application key:
+4. Generate the Laravel app key and create the framework migration table:
    ```bash
    php artisan key:generate
-   ```
-8. Run database migrations if migrations have been created:
-   ```bash
    php artisan migrate
    ```
-9. Start the local development server:
+5. Start Laravel:
    ```bash
    php artisan serve
    ```
 
-Open the local URL displayed by Laravel in your browser. These steps assume the repository contains a standard Laravel application; adjust them if the project has not yet been initialised.
+Open the URL shown by Artisan. `/` serves the existing `public/index.html`; existing pages such as `/activities.html` and assets under `/assets/` remain directly accessible. `/api/health` is a starter JSON route. Add backend endpoints in `routes/web.php` (or add API routing when needed), app logic in `app/`, and schema changes as Laravel migrations under `database/migrations/`.
+
+Keep `.env` private and never commit database passwords. Configure your web server document root to this project's `public/` directory in deployment.
 
 ## Project Structure
 
-The exact structure depends on the implementation. A standard Laravel application commonly includes:
-
 ```text
 project-folder/
-├── app/              # Application logic
-├── database/         # Migrations, seeders, factories
-├── public/           # Public assets and entry point
-├── resources/        # Views and frontend resources
-├── routes/           # Web/API route definitions
-├── storage/          # Logs and generated files
-├── tests/            # Automated tests
-├── .env.example      # Example environment configuration
-├── artisan           # Laravel command-line entry point
-└── composer.json     # PHP dependencies and scripts
+├── app/                    # Laravel application classes
+├── bootstrap/              # Laravel application bootstrap
+├── config/                 # Application and database configuration
+├── database/migrations/    # Database schema changes
+├── public/                 # Existing frontend and Laravel entry point
+│   └── assets/             # Existing CSS and JavaScript
+├── resources/views/        # Blade views as frontend pages are migrated
+├── routes/                 # Laravel web and console routes
+├── storage/                # Runtime files, cache, and logs
+├── .env.example             # Environment template
+├── artisan                 # Laravel command line
+└── composer.json            # Laravel dependencies and autoloading
 ```
-
 ## Development Roadmap
 
 1. Confirm requirements with stakeholders.
@@ -132,3 +122,5 @@ Avoid committing `.env`, passwords, API keys, database credentials, or private i
 ## License
 
 No license has been selected yet. Add a license only after the project team decides how the code may be used and shared.
+
+

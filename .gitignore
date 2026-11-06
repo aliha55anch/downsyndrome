@@ -1,0 +1,34 @@
+# Local environment and credentials
+/.env
+/.env.*
+!/.env.example
+/auth.json
+
+# Composer dependencies and local installer
+/vendor/
+/composer.phar
+
+# Laravel generated runtime files
+/bootstrap/cache/*.php
+/storage/*.key
+/storage/logs/*.log
+/storage/framework/cache/data/*
+!/storage/framework/cache/data/.gitkeep
+/storage/framework/sessions/*
+!/storage/framework/sessions/.gitkeep
+/storage/framework/views/*
+!/storage/framework/views/.gitkeep
+/storage/framework/testing/*
+!/storage/framework/testing/.gitkeep
+
+# Frontend build outputs and dependencies (if added later)
+/node_modules/
+/public/build/
+/public/hot
+
+# Test and editor artifacts
+/.phpunit.cache/
+/.idea/
+*.log
+.DS_Store
+Thumbs.db
