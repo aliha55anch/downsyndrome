@@ -15,7 +15,7 @@
 function loadList(key, defaultList) {
   var text = localStorage.getItem(key);
   if (text === null) {
-    return defaultList;
+  return defaultList;
   }
   return JSON.parse(text);
 }
@@ -167,30 +167,54 @@ function fillSelect(selectId, words, firstOptionText) {
 
 // ---------- 4. Cards used on more than one page ----------
 
+function areaImage(areaName) {
+  var map = {
+    "Speech": "assets/images/area-speech.jpeg",
+    "Gross Motor": "assets/images/area-gross.jpeg",
+    "Fine Motor": "assets/images/area-fine.jpeg",
+    "Learning": "assets/images/area-learning.jpeg",
+    "Self Help": "assets/images/area-self.jpeg",
+    "Social": "assets/images/area-social.jpeg"
+  };
+  return map[areaName] || "assets/images/area-speech.jpeg";
+}
+
 function activityCard(a) {
   var area = areaInfo(a.area);
-  return '<div class="card">' +
-    '<div class="card-icon">' + area.icon + '</div>' +
-    '<span class="tag ' + area.cls + '">' + escapeText(a.area) + '</span>' +
-    '<span class="tag tag-age">' + escapeText(a.ageGroup) + '</span>' +
-    '<h3>' + escapeText(a.title) + '</h3>' +
-    '<p>' + escapeText(a.goal) + '</p>' +
-    '<p class="muted">⏱ ' + a.minutes + ' minutes</p>' +
-    '<a class="btn btn-blue btn-small" href="activity_detail.html?id=' + a.id + '">See activity</a>' +
+  var imgSrc = areaImage(a.area);
+  return '<div class="card activity-card ' + area.cls + '">' +
+    '<div class="card-bg-media">' +
+      '<img class="card-bg-img" src="' + imgSrc + '" alt="' + escapeText(a.title) + '" onerror="this.style.display=\'none\'">' +
+    '</div>' +
+    '<div class="card-bottom-panel">' +
+      '<div class="card-tags">' +
+        '<span class="tag ' + area.cls + '">' + escapeText(a.area) + '</span>' +
+        '<span class="tag tag-age">' + escapeText(a.ageGroup) + '</span>' +
+      '</div>' +
+      '<h3 class="activity-title"><span class="title-highlight">' + escapeText(a.title) + '</span></h3>' +
+      '<p>' + escapeText(a.goal) + '</p>' +
+      '<p class="muted">' + a.minutes + ' minutes</p>' +
+      '<a class="btn btn-blue btn-small" href="activity_detail.html?id=' + a.id + '">See activity</a>' +
+    '</div>' +
     '</div>';
 }
 
 function doctorCard(d) {
-  return '<div class="card">' +
-    '<div class="card-icon">🩺</div>' +
-    '<span class="tag">' + escapeText(d.specialty) + '</span>' +
-    '<h3>' + escapeText(d.name) + '</h3>' +
-    '<p class="muted">📍 ' + escapeText(d.city) + ' &nbsp;|&nbsp; ' + escapeText(d.mode) + '</p>' +
-    '<p>Fee: Rs ' + d.fee + '</p>' +
-    '<a class="btn btn-blue btn-small" href="doctor_detail.html?id=' + d.id + '">View profile</a>' +
+  return '<div class="card doctor-card">' +
+    '<div class="card-bg-media doctor-bg-media">' +
+      '<img class="card-bg-img" src="assets/images/doctor.jpg" alt="' + escapeText(d.name) + '" onerror="this.style.display=\'none\'">' +
+    '</div>' +
+    '<div class="card-bottom-panel">' +
+      '<div class="card-tags">' +
+        '<span class="tag">' + escapeText(d.specialty) + '</span>' +
+      '</div>' +
+      '<h3>' + escapeText(d.name) + '</h3>' +
+      '<p class="muted">' + escapeText(d.city) + ' &nbsp;|&nbsp; ' + escapeText(d.mode) + '</p>' +
+      '<p>Fee: Rs ' + d.fee + '</p>' +
+      '<a class="btn btn-blue btn-small" href="doctor_detail.html?id=' + d.id + '">View profile</a>' +
+    '</div>' +
     '</div>';
 }
-
 
 // ---------- 5. Navigation bar and footer ----------
 // Every page has <div id="navbar"></div> and <div id="footer"></div>.
@@ -264,11 +288,20 @@ function buildNavbar() {
 
 function buildFooter() {
   document.getElementById("footer").innerHTML =
-    '<footer class="footer"><div class="container">' +
-    '<p>🧩 Little Steps: support for families of children with Down syndrome</p>' +
-    '<p>This website gives general guidance. It is not medical advice. ' +
-    'Please talk to a qualified doctor or therapist about your child.</p>' +
-    '<p>Made as a university project.</p>' +
+    '<footer class="site-footer"><div class="container">' +
+    '<div class="footer-grid">' +
+      '<div><h4>Little Steps</h4>' +
+      '<p>Support for families of children with Down syndrome. Every child learns at their own pace.</p></div>' +
+      '<div><h4>Quick links</h4><ul>' +
+      '<li><a href="activities.html">Activities</a></li>' +
+      '<li><a href="doctors.html">Find a Doctor</a></li>' +
+      '<li><a href="about.html">About</a></li>' +
+      '<li><a href="contact.html">Contact</a></li></ul></div>' +
+      '<div><h4>Awareness</h4>' +
+      '<p>World Down Syndrome Day: 21 March</p></div>' +
+    '</div>' +
+    '<div class="footer-bottom">This website gives general guidance, not medical advice. ' +
+    'Please talk to a qualified doctor or therapist. Made as a university project.</div>' +
     '</div></footer>';
 }
 

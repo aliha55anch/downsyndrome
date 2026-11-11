@@ -17,7 +17,7 @@ if (doctor === null) {
 } else {
   document.getElementById("detail").innerHTML =
     '<div class="detail-box">' +
-    '<div class="card-icon">🩺</div>' +
+    '<div class="card-icon"><svg viewBox="0 0 24 24"><path d="M4.5 3v5a4.5 4.5 0 0 0 9 0V3"/><circle cx="18" cy="10" r="3"/><path d="M9 12.5v3.5a4 4 0 0 0 8 0v-3"/></svg></div>' +
     '<span class="tag">' + escapeText(doctor.specialty) + '</span>' +
     '<h1>' + escapeText(doctor.name) + '</h1>' +
     '<p>' + escapeText(doctor.bio) + '</p>' +
@@ -30,7 +30,7 @@ if (doctor === null) {
     '<p><strong>Address:</strong> ' + escapeText(doctor.address) + '</p>' +
     '<p><strong>Phone:</strong> ' + escapeText(doctor.phone) + '</p>' +
     '<div class="btn-row">' +
-      '<a class="btn btn-yellow" href="tel:' + escapeText(doctor.phone.replace(/\s/g, "")) + '">📞 Call now</a>' +
+      '<a class="btn btn-yellow" href="tel:' + escapeText(doctor.phone.replace(/\s/g, "")) + '">Call now</a>' +
       '<a class="btn btn-outline" href="contact.html">Send us a message</a>' +
     '</div>' +
     '</div>';

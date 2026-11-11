@@ -17,37 +17,38 @@
     </div>
   </section>
 
-  <main class="container section">
-
-    <!-- Filters -->
-    <div class="filter-bar">
-      <div class="form-row">
-        <div>
-          <label for="specialty-filter">Type</label>
-          <select id="specialty-filter"></select>
-        </div>
-        <div>
-          <label for="city-filter">City</label>
-          <select id="city-filter"></select>
-        </div>
-        <div>
-          <label for="mode-filter">Meeting</label>
-          <select id="mode-filter">
-            <option value="">Online or in person</option>
-            <option value="Online">Online</option>
-            <option value="In person">In person</option>
-          </select>
+  <main class="section bg-cream">
+    <div class="container">
+      <!-- Filters -->
+      <div class="filter-bar">
+        <div class="form-row">
+          <div>
+            <label for="specialty-filter">Type</label>
+            <select id="specialty-filter"></select>
+          </div>
+          <div>
+            <label for="city-filter">City</label>
+            <select id="city-filter"></select>
+          </div>
+          <div>
+            <label for="mode-filter">Meeting</label>
+            <select id="mode-filter">
+              <option value="">Online or in person</option>
+              <option value="Online">Online</option>
+              <option value="In person">In person</option>
+            </select>
+          </div>
         </div>
       </div>
-    </div>
 
-    <p id="result-count" class="muted"></p>
+      <p id="result-count" class="muted"></p>
 
-    <!-- Doctor cards are added here by doctors.js -->
-    <div class="grid" id="doctor-list"></div>
+      <!-- Doctor cards are added here by doctors.js -->
+      <div class="grid" id="doctor-list"></div>
 
-    <div class="disclaimer">
-      The profiles on this page are sample data for the project demo. The names and phone numbers are not real.
+      <div class="disclaimer">
+        The profiles on this page are sample data for the project demo. The names and phone numbers are not real.
+      </div>
     </div>
   </main>
 
