@@ -37,7 +37,7 @@ function showDashboard() {
       '<h3>' + escapeText(child.name) + '</h3>' +
       '<p>Age: ' + calcAge(child.dob) + '</p>' +
       '<p><span class="tag tag-age">' + ageGroup + '</span></p>' +
-      '<a class="btn btn-blue btn-small" href="activities.html?age=' + encodeURIComponent(ageGroup) + '">Find activities</a> ' +
+      '<a class="btn btn-blue btn-small" href="/activities?age_group=' + encodeURIComponent(ageGroup) + '">Find activities</a> ' +
       '<a class="btn btn-outline btn-small" href="parent_child.html?id=' + child.id + '">Edit</a> ' +
       '<button class="btn btn-red btn-small delete-child" data-id="' + child.id + '">Delete</button>' +
       '</div>';
@@ -90,7 +90,7 @@ function showLogs(children) {
 
   var area = document.getElementById("logs-area");
   if (count === 0) {
-    area.innerHTML = '<div class="card"><p>No activities done yet. <a href="activities.html">Choose an activity</a> and tap "Mark as done".</p></div>';
+    area.innerHTML = '<div class="card"><p>No activities done yet. <a href="/activities">Choose an activity</a> and tap "Mark as done".</p></div>';
   } else {
     area.innerHTML = '<div class="table-wrap"><table>' +
       '<tr><th>Date</th><th>Child</th><th>Activity</th><th>Note</th></tr>' + rows + '</table></div>';

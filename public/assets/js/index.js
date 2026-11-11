@@ -17,14 +17,14 @@ document.getElementById("next-form").onsubmit = function (event) {
   event.preventDefault();
   var age = document.getElementById("age-select").value;
   var area = document.getElementById("area-select").value;
-  window.location.href = "activities.html?age=" + encodeURIComponent(age) + "&area=" + encodeURIComponent(area);
+  window.location.href = "/activities?age_group=" + encodeURIComponent(age) + "&development_area=" + encodeURIComponent(area);
 };
 
 // 3. Show the six age group cards
 var ageHtml = "";
 for (var k = 0; k < AGE_GROUPS.length; k++) {
   var group = AGE_GROUPS[k];
-  ageHtml += '<a class="age-card" href="activities.html?age=' + encodeURIComponent(group.name) + '">' +
+  ageHtml += '<a class="age-card" href="/activities?age_group=' + encodeURIComponent(group.name) + '">' +
     group.name + '<small>' + group.focus + '</small></a>';
 }
 document.getElementById("age-list").innerHTML = ageHtml;
