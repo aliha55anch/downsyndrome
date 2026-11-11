@@ -1,30 +1,20 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Doctor Profile | Little Steps</title>
-  <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
-
-  <div id="navbar"></div>
-
-  <main class="container section">
-    <a class="back-link" href="doctors.html">← Back to all doctors</a>
-
-    <!-- The doctor is added here by doctor_detail.js -->
-    <div id="detail"></div>
-
-    <div class="disclaimer">
-      Please call to confirm the fee, timings and whether the doctor is right for your child. This website does not give medical advice.
-    </div>
-  </main>
-
-  <div id="footer"></div>
-
-  <script src="assets/js/data.js"></script>
-  <script src="assets/js/main.js"></script>
-  <script src="assets/js/doctor_detail.js"></script>
+  <p id="message">Opening the published doctor profile…</p>
+  <script>
+    const id = new URLSearchParams(window.location.search).get('id');
+    if (/^[1-9][0-9]*$/.test(id || '')) {
+      window.location.replace('/doctors/' + encodeURIComponent(id));
+    } else {
+      document.getElementById('message').innerHTML = 'Choose a real, published doctor from the <a href="/doctors">doctor directory</a>.';
+    }
+  </script>
+  <noscript><p><a href="/doctors">Open the live doctor directory</a>.</p></noscript>
 </body>
 </html>

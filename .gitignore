@@ -23,8 +23,13 @@
 
 # Frontend build outputs and dependencies (if added later)
 /node_modules/
+/.pnpm-store/
 /public/build/
 /public/hot
+
+# Private user uploads and local test output
+/storage/app/private/
+/.phpunit.result.cache
 
 # Test and editor artifacts
 /.phpunit.cache/

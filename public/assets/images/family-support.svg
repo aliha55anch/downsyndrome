@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 390" role="img" aria-labelledby="title desc">
+  <title id="title">A family learning together</title>
+  <desc id="desc">A caregiver and child share a colorful learning activity in a welcoming room.</desc>
+  <rect x="36" y="24" width="448" height="342" rx="42" fill="#e8f4f4"/>
+  <circle cx="413" cy="85" r="29" fill="#f5d87b"/>
+  <path d="M72 286c51-43 99-47 150-12 40-49 101-59 162-28 44-22 79-15 110 13v78H72z" fill="#d3e9d9"/>
+  <rect x="112" y="130" width="106" height="104" rx="16" fill="#fff" stroke="#cfe1e5" stroke-width="6"/>
+  <path d="M165 131v102M114 182h102" stroke="#d5e9f1" stroke-width="5"/>
+  <circle cx="167" cy="158" r="17" fill="#f5d87b"/>
+  <path d="M132 219c10-23 27-31 36-31s27 8 38 31" fill="#84b8a3"/>
+  <path d="M245 327c5-47 17-81 41-101 20-17 51-17 70 1 20 18 28 55 32 100" fill="#347da1"/>
+  <path d="M270 244c-8 25-3 48 15 60 18 12 42 8 55-9 13-17 13-45 2-62-15-23-60-17-72 11z" fill="#c78462"/>
+  <path d="M263 245c-1-28 17-51 43-55 26-4 50 14 53 42-14-9-27-16-43-19-14 13-32 22-53 32z" fill="#28495a"/>
+  <path d="M318 279c18 22 39 37 65 41" fill="none" stroke="#c78462" stroke-width="14" stroke-linecap="round"/>
+  <path d="M227 330c2-35 12-57 29-66 15-8 34-2 42 12 8 15 5 37-4 54" fill="#f0b68f"/>
+  <path d="M234 290c2-24 17-42 36-43 18-1 32 15 31 36-16-3-27-11-35-22-8 14-18 23-32 29z" fill="#775044"/>
+  <circle cx="264" cy="297" r="2.7" fill="#263f4c"/>
+  <path d="M265 310c5 4 10 4 14 0" fill="none" stroke="#a95d52" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M259 328c12 6 25 6 36-1l18 18h-73z" fill="#f4d36f"/>
+  <rect x="277" y="317" width="64" height="10" rx="5" transform="rotate(-12 277 317)" fill="#f2d170"/>
+  <path d="M358 200l11-18 12 18-12 18zM91 92l8-14 10 14-10 14z" fill="#e9aa83"/>
+</svg>

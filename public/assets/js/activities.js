@@ -1,4 +1,4 @@
-// activities.js (Activities list page)
+window.location.replace('/activities');
 
 var activities = getActivities();
 
