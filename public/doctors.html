@@ -1,60 +1,13 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="refresh" content="0;url=/doctors">
   <title>Find a Doctor | Little Steps</title>
-  <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
-
-  <div id="navbar"></div>
-
-  <section class="page-title">
-    <div class="container">
-      <h1>Find a Doctor or Therapist</h1>
-      <p>Search by type, city and how you want to meet</p>
-    </div>
-  </section>
-
-  <main class="container section">
-
-    <!-- Filters -->
-    <div class="filter-bar">
-      <div class="form-row">
-        <div>
-          <label for="specialty-filter">Type</label>
-          <select id="specialty-filter"></select>
-        </div>
-        <div>
-          <label for="city-filter">City</label>
-          <select id="city-filter"></select>
-        </div>
-        <div>
-          <label for="mode-filter">Meeting</label>
-          <select id="mode-filter">
-            <option value="">Online or in person</option>
-            <option value="Online">Online</option>
-            <option value="In person">In person</option>
-          </select>
-        </div>
-      </div>
-    </div>
-
-    <p id="result-count" class="muted"></p>
-
-    <!-- Doctor cards are added here by doctors.js -->
-    <div class="grid" id="doctor-list"></div>
-
-    <div class="disclaimer">
-      The profiles on this page are sample data for the project demo. The names and phone numbers are not real.
-    </div>
-  </main>
-
-  <div id="footer"></div>
-
-  <script src="assets/js/data.js"></script>
-  <script src="assets/js/main.js"></script>
-  <script src="assets/js/doctors.js"></script>
+  <p>The doctor directory has moved. <a href="/doctors">Continue to the live doctor directory</a>.</p>
+  <script>window.location.replace('/doctors' + window.location.search + window.location.hash);</script>
 </body>
 </html>

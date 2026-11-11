@@ -5,10 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Little Steps | Home</title>
   <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="stylesheet" href="assets/css/interface.css">
 </head>
 <body>
 
-  <!-- Menu is added here by main.js -->
+  <!-- Menu is enhanced by main.js; these links remain available if JavaScript is cached or unavailable. -->
   <div id="navbar"></div>
 
   <!-- Top banner -->
@@ -18,11 +19,15 @@
         <h1>Every child learns at their own pace</h1>
         <p>Simple home activities, clear information and trusted doctors for families of children with Down syndrome.</p>
         <div class="btn-row">
-          <a class="btn btn-yellow" href="activities.html">Find Activities</a>
-          <a class="btn btn-outline" href="doctors.html">Find a Doctor</a>
+          <a class="btn btn-yellow" href="/activities">Find Activities</a>
+          <a class="btn btn-outline" href="/doctors">Professional Consultancy</a>
+          <span id="guest-actions" hidden>
+            <a class="btn btn-blue" href="/login">Login</a>
+            <a class="btn btn-outline" href="/register">Register</a>
+          </span>
         </div>
       </div>
-      <div class="hero-art">🧸🌈<br>👨‍👩‍👧</div>
+      <div class="hero-art"><img class="hero-illustration" src="assets/images/family-support.svg" alt="A caregiver and child sharing a learning activity together"></div>
     </div>
   </section>
 
@@ -81,7 +86,7 @@
     <section class="section">
       <h2 class="center">Activities to try</h2>
       <div class="grid" id="featured"></div>
-      <p class="center"><a class="btn btn-blue" href="activities.html">See all activities</a></p>
+      <p class="center"><a class="btn btn-blue" href="/activities">See all activities</a></p>
     </section>
 
     <!-- Doctor box -->
@@ -89,7 +94,7 @@
       <div class="card center">
         <h2>Need help from a professional?</h2>
         <p>Find speech therapists, physiotherapists, special educators and more.</p>
-        <a class="btn btn-yellow" href="doctors.html">Find a Doctor</a>
+        <a class="btn btn-yellow" href="/doctors">Professional Consultancy</a>
       </div>
     </section>
 
