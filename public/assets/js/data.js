@@ -16,12 +16,12 @@ var AGE_GROUPS = [
 
 // The six development areas. "cls" is the color label in style.css.
 var AREAS = [
-  { name: "Speech", icon: "🗣️", cls: "tag-speech" },
-  { name: "Gross Motor", icon: "🚶", cls: "tag-gross" },
-  { name: "Fine Motor", icon: "✋", cls: "tag-fine" },
-  { name: "Learning", icon: "🧠", cls: "tag-learning" },
-  { name: "Self Help", icon: "🪥", cls: "tag-self" },
-  { name: "Social", icon: "🤝", cls: "tag-social" }
+  { name: "Speech", icon: "", cls: "tag-speech" },
+  { name: "Gross Motor", icon: "", cls: "tag-gross" },
+  { name: "Fine Motor", icon: "", cls: "tag-fine" },
+  { name: "Learning", icon: "", cls: "tag-learning" },
+  { name: "Self Help", icon: "", cls: "tag-self" },
+  { name: "Social", icon: "", cls: "tag-social" }
 ];
 
 // Types of doctors and therapists.

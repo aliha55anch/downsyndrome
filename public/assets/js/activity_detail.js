@@ -93,7 +93,7 @@ function showDoneBox(a) {
     '<label for="child-select">Child</label><select id="child-select">' + options + '</select>' +
     '<label for="note">Note (optional)</label>' +
     '<textarea id="note" placeholder="How did it go?"></textarea>' +
-    '<button class="btn btn-yellow" id="done-btn">✔ Mark as done</button>' +
+    '<button class="btn btn-yellow" id="done-btn">Mark as done</button>' +
     '<div id="done-message"></div></div>';
 
   document.getElementById("done-btn").onclick = function () {

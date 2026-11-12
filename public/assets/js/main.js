@@ -15,7 +15,7 @@
 function loadList(key, defaultList) {
   var text = localStorage.getItem(key);
   if (text === null) {
-    return defaultList;
+  return defaultList;
   }
   return JSON.parse(text);
 }
@@ -148,19 +148,54 @@ function fillSelect(selectId, words, firstOptionText) {
 
 // ---------- 4. Cards used on more than one page ----------
 
+function areaImage(areaName) {
+  var map = {
+    "Speech": "assets/images/area-speech.jpeg",
+    "Gross Motor": "assets/images/area-gross.jpeg",
+    "Fine Motor": "assets/images/area-fine.jpeg",
+    "Learning": "assets/images/area-learning.jpeg",
+    "Self Help": "assets/images/area-self.jpeg",
+    "Social": "assets/images/area-social.jpeg"
+  };
+  return map[areaName] || "assets/images/area-speech.jpeg";
+}
+
 function activityCard(a) {
   var area = areaInfo(a.area);
-  return '<div class="card">' +
-    '<div class="card-icon">' + area.icon + '</div>' +
-    '<span class="tag ' + area.cls + '">' + escapeText(a.area) + '</span>' +
-    '<span class="tag tag-age">' + escapeText(a.ageGroup) + '</span>' +
-    '<h3>' + escapeText(a.title) + '</h3>' +
-    '<p>' + escapeText(a.goal) + '</p>' +
-    '<p class="muted">⏱ ' + a.minutes + ' minutes</p>' +
-    '<a class="btn btn-blue btn-small" href="/activities/' + a.id + '">See activity</a>' +
+  var imgSrc = areaImage(a.area);
+  return '<div class="card activity-card ' + area.cls + '">' +
+    '<div class="card-bg-media">' +
+      '<img class="card-bg-img" src="' + imgSrc + '" alt="' + escapeText(a.title) + '" onerror="this.style.display=\'none\'">' +
+    '</div>' +
+    '<div class="card-bottom-panel">' +
+      '<div class="card-tags">' +
+        '<span class="tag ' + area.cls + '">' + escapeText(a.area) + '</span>' +
+        '<span class="tag tag-age">' + escapeText(a.ageGroup) + '</span>' +
+      '</div>' +
+      '<h3 class="activity-title"><span class="title-highlight">' + escapeText(a.title) + '</span></h3>' +
+      '<p>' + escapeText(a.goal) + '</p>' +
+      '<p class="muted">' + a.minutes + ' minutes</p>' +
+      '<a class="btn btn-blue btn-small" href="/activities/' + a.id + '">See activity</a>' +
+    '</div>' +
     '</div>';
 }
 
+function doctorCard(d) {
+  return '<div class="card doctor-card">' +
+    '<div class="card-bg-media doctor-bg-media">' +
+      '<img class="card-bg-img" src="assets/images/doctor.jpg" alt="' + escapeText(d.name) + '" onerror="this.style.display=\'none\'">' +
+    '</div>' +
+    '<div class="card-bottom-panel">' +
+      '<div class="card-tags">' +
+        '<span class="tag">' + escapeText(d.specialty) + '</span>' +
+      '</div>' +
+      '<h3>' + escapeText(d.name) + '</h3>' +
+      '<p class="muted">' + escapeText(d.city) + ' &nbsp;|&nbsp; ' + escapeText(d.mode) + '</p>' +
+      '<p>Fee: Rs ' + d.fee + '</p>' +
+      '<a class="btn btn-blue btn-small" href="/doctors/' + d.id + '">View profile</a>' +
+    '</div>' +
+    '</div>';
+}
 // ---------- 5. Navigation bar and footer ----------
 // Every page has <div id="navbar"></div> and <div id="footer"></div>.
 // These two functions fill them, so we write the menu only once.
