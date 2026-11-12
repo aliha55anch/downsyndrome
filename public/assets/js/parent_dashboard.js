@@ -20,7 +20,7 @@ function getMyChildren() {
 }
 
 function showDashboard() {
-  document.getElementById("welcome").textContent = "Hello, " + user.name + " 👋";
+  document.getElementById("welcome").textContent = "Hello, " + user.name;
 
   var children = getMyChildren();
 
@@ -33,7 +33,7 @@ function showDashboard() {
     var child = children[i];
     var ageGroup = ageGroupFor(child.dob);
     html += '<div class="card">' +
-      '<div class="card-icon">🧒</div>' +
+      '<div class="card-icon"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>' +
       '<h3>' + escapeText(child.name) + '</h3>' +
       '<p>Age: ' + calcAge(child.dob) + '</p>' +
       '<p><span class="tag tag-age">' + ageGroup + '</span></p>' +
