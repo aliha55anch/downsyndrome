@@ -1,4 +1,4 @@
-// activity_detail.js (One activity page)
+window.location.replace('/activities');
 
 // 1. Find the activity using the number in the address (?id=3)
 var id = Number(getParam("id"));
@@ -57,8 +57,8 @@ function showDoneBox(a) {
   if (user === null) {
     box.innerHTML = '<div class="card" style="margin-top:20px"><h3>Track your progress</h3>' +
       '<p>Log in as a parent to mark this activity as done.</p>' +
-      '<a class="btn btn-blue btn-small" href="login.html">Login</a> ' +
-      '<a class="btn btn-outline btn-small" href="register.html">Create account</a></div>';
+      '<a class="btn btn-blue btn-small" href="/login">Login</a> ' +
+      '<a class="btn btn-outline btn-small" href="/register">Create account</a></div>';
     return;
   }
 

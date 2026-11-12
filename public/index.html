@@ -6,9 +6,11 @@
   <title>Little Steps | Home</title>
   <script>document.documentElement.classList.add('js');</script>
   <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="stylesheet" href="assets/css/interface.css">
 </head>
 <body>
 
+  <!-- Menu is enhanced by main.js; these links remain available if JavaScript is cached or unavailable. -->
   <div id="navbar"></div>
 
   <!-- HERO -->
@@ -19,8 +21,12 @@
         <h1>Every Child.<br>Every Step.<br>Together.</h1>
         <p>Simple home activities, clear information and trusted doctors for families of children with Down syndrome.</p>
         <div class="btn-row">
-          <a class="btn btn-blue" href="activities.html">Find Activities</a>
-          <a class="btn btn-dark-outline" href="doctors.html">Find a Doctor</a>
+          <a class="btn btn-blue" href="/activities">Find Activities</a>
+          <a class="btn btn-dark-outline" href="/doctors">Find a Doctor</a>
+          <span id="guest-actions" hidden>
+            <a class="btn btn-blue" href="/login">Login</a>
+            <a class="btn btn-outline" href="/register">Register</a>
+          </span>
         </div>
       </div>
 
@@ -81,8 +87,7 @@
         </div>
       </div>
     </section>
-.
-    <!-- HOW IT WORKS -->
+<!-- HOW IT WORKS -->
     <section class="section bg-blue-soft">
       <div class="container">
         <div class="section-head reveal">
@@ -128,7 +133,7 @@
           <h2>Activities to try</h2>
         </div>
         <div class="grid reveal" id="featured"></div>
-        <p class="center"><a class="btn btn-blue" href="activities.html">See all activities</a></p>
+        <p class="center"><a class="btn btn-blue" href="/activities">See all activities</a></p>
       </div>
     </section>
 
@@ -138,7 +143,7 @@
         <div class="card center cta-card">
           <h2>Need help from a professional?</h2>
           <p>Find speech therapists, physiotherapists, special educators and more.</p>
-          <a class="btn btn-yellow" href="doctors.html">Find a Doctor</a>
+          <a class="btn btn-yellow" href="/doctors">Find a Doctor</a>
         </div>
         <div class="disclaimer">
           This website gives general guidance, not medical advice. If you have concerns about your child's development, please talk to a qualified doctor or therapist.

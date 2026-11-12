@@ -1,0 +1,5 @@
+@extends('layouts.dashboard')
+@section('heading', 'Your children')
+@section('dashboard-content')
+<section class="dashboard-panel"><div class="panel-heading"><div><span class="eyebrow">Family profiles</span><h2>Choose a child</h2></div><a class="btn btn-blue" href="{{ route('dashboard.children.create') }}">Add child</a></div><div class="dashboard-cards">@forelse($children as $child)<article class="dashboard-card mint"><small>{{ $child->date_of_birth?->age }} years old</small><h2>{{ $child->name }}</h2>@if($child->interests)<p><strong>Interests:</strong> {{ \Illuminate\Support\Str::limit($child->interests, 100) }}</p>@elseif($child->learning_goals)<p><strong>Learning goals:</strong> {{ \Illuminate\Support\Str::limit($child->learning_goals, 100) }}</p>@else<p>Child profile</p>@endif<div class="btn-row"><a class="btn btn-outline btn-small" href="{{ route('dashboard.progress',['child_id'=>$child->id]) }}">View progress</a><a class="btn btn-blue btn-small" href="{{ route('dashboard.children.edit',$child) }}">Edit profile</a></div></article>@empty<p>No child profile has been added yet. You can add one whenever you are ready.</p>@endforelse</div></section>
+@endsection
