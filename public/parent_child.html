@@ -3,33 +3,34 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Child Profile | Little Steps</title>
+  <title>My Dashboard | Little Steps</title>
   <link rel="stylesheet" href="assets/css/style.css">
-  <link rel="stylesheet" href="assets/css/interface.css">
 </head>
 <body>
 
   <div id="navbar"></div>
 
-  <main class="container section">
-    <a class="back-link" href="parent_dashboard.html">← Back to my dashboard</a>
+  <section class="page-title">
+    <div class="container">
+      <h1 id="welcome">My Dashboard</h1>
+      <p id="summary">Your children and the activities you have done</p>
+    </div>
+  </section>
 
-    <div class="form-box form-narrow">
-      <h2 id="form-title">Add a child</h2>
+  <main class="section bg-cream">
+    <div class="container">
+      <h2>My children</h2>
+      <!-- Child cards are added here by parent_dashboard.js -->
+      <div class="grid" id="children-list"></div>
+      <p><a class="btn btn-yellow" href="parent_child.html">+ Add a child</a></p>
 
-      <form id="child-form">
-        <label for="name">Child's name</label>
-        <input type="text" id="name" placeholder="Name">
+      <h2 style="margin-top:36px">Activities done</h2>
+      <!-- The table of finished activities is added here -->
+      <div id="logs-area"></div>
 
-        <label for="dob">Date of birth</label>
-        <input type="date" id="dob">
-        <p class="hint">We use this to show activities that suit your child's age.</p>
-
-        <button class="btn btn-yellow" type="submit" style="width:100%">Save</button>
-      </form>
-
-      <!-- Error message appears here -->
-      <div id="form-message"></div>
+      <div class="disclaimer">
+        This page is only a simple record for you. It is not a medical report. Please share any concerns about your child with a qualified doctor or therapist.
+      </div>
     </div>
   </main>
 
@@ -37,6 +38,6 @@
 
   <script src="assets/js/data.js"></script>
   <script src="assets/js/main.js"></script>
-  <script src="assets/js/parent_child.js"></script>
+  <script src="assets/js/parent_dashboard.js"></script>
 </body>
 </html>
