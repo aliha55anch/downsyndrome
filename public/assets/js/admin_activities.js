@@ -1,4 +1,4 @@
-// admin_activities.js (Admin: manage activities)
+window.location.replace('/admin/activities');
 
 // Only the admin can see this page
 var user = requireRole("admin");

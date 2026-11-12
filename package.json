@@ -1,0 +1,9 @@
+{
+	"scripts": {
+		"build:pptx-viewer": "node scripts/build-pptx-viewer.mjs"
+	},
+	"devDependencies": {
+		"pptx-vanilla-viewer": "^3.72.0",
+		"esbuild": "^0.28.2"
+	}
+}
