@@ -124,6 +124,8 @@ Route::get('/activities/{activity}/download/{type}', [ActivityResourceController
 
 Route::middleware('guest')->group(function (): void {
     Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');
+    Route::get('/admin/login', [AuthenticatedSessionController::class, 'adminCreate'])->name('admin.login');
+    Route::get('/doctor/login', [AuthenticatedSessionController::class, 'doctorCreate'])->name('doctor.login');
     Route::post('/login', [AuthenticatedSessionController::class, 'store'])->middleware('throttle:10,1');
 
     Route::get('/register', [RegisteredUserController::class, 'create'])->name('register');

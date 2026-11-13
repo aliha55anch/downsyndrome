@@ -22,12 +22,23 @@ class AuthenticatedSessionController extends Controller
         return view('auth.login');
     }
 
+    public function adminCreate(): View
+    {
+        return view('auth.admin-login');
+    }
+
+    public function doctorCreate(): View
+    {
+        return view('auth.doctor-login');
+    }
+
     public function store(Request $request): RedirectResponse
     {
         $credentials = $request->validate([
             'email' => ['required', 'email'],
             'password' => ['required', 'string'],
             'remember' => ['nullable', 'boolean'],
+            'portal' => ['nullable', 'in:family,admin,doctor'],
         ]);
 
         $key = $this->throttleKey($request);
@@ -46,6 +57,27 @@ class AuthenticatedSessionController extends Controller
 
             throw ValidationException::withMessages([
                 'email' => 'The provided credentials do not match our records.',
+            ]);
+        }
+
+        $user = $request->user();
+        $portal = $credentials['portal'] ?? 'family';
+
+        if ($portal === 'admin' && ! $user->isAdmin()) {
+            Auth::logout();
+            RateLimiter::clear($key);
+
+            throw ValidationException::withMessages([
+                'email' => 'This account does not have administrator access. Use the family login or contact support.',
+            ]);
+        }
+
+        if ($portal === 'doctor' && ! $user->hasRole(User::ROLE_PENDING_DOCTOR, User::ROLE_APPROVED_DOCTOR)) {
+            Auth::logout();
+            RateLimiter::clear($key);
+
+            throw ValidationException::withMessages([
+                'email' => 'This account is not registered as a healthcare professional. Apply for doctor verification or use the family login.',
             ]);
         }
 

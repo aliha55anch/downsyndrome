@@ -21,6 +21,7 @@ class ActivityController extends Controller
         if (! in_array($tab, ['my', 'all', 'completed'], true)) {
             $tab = 'all';
         }
+        $totalActivities = Activity::published()->count();
         $query = Activity::published()
             ->when(request('search'), function ($query, string $search): void {
                 $query->where(function ($searchQuery) use ($search): void {
@@ -65,6 +66,7 @@ class ActivityController extends Controller
 
         return view('activities.index', [
             'activities' => $activities,
+            'totalActivities' => $totalActivities,
             'ageGroups' => Activity::AGE_GROUPS,
             'developmentAreas' => Activity::DEVELOPMENT_AREAS,
             'filters' => request()->only(['search', 'age_group', 'development_area']),
