@@ -67,7 +67,7 @@
 
         <div class="al-hero__art" aria-hidden="true">
             <div class="al-hero__photo">
-                <img src="{{ asset('assets/images/hero.jpeg') }}" alt="">
+                <img src="{{ asset('assets/images/age-bg.jpeg') }}" alt="">
                 <div class="al-hero__caption">
                     <span>Made for everyday moments</span>
                     A library of small wins.
@@ -120,7 +120,7 @@
                         <label for="search">Search activities</label>
                         <div class="al-input-wrap">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-                            <input type="search" id="search" name="search" value="{{ $filters['search'] ?? '' }}" placeholder="Try “sensory play” or “language”">
+                            <input type="text" id="search" name="search" value="{{ $filters['search'] ?? '' }}" placeholder="Try “sensory play” or “language”">
                         </div>
                     </div>
 
@@ -223,6 +223,7 @@
 
                         <div class="al-card__badges">
                             <span class="al-badge al-badge--area">{{ $activity->development_area ?: 'Activity' }}</span>
+                            @if ($activity->video_path || $activity->youtube_url)<span class="al-badge al-badge--video">Video</span>@endif
                             @if ($isRecommended)
                                 <span class="al-badge al-badge--recommended">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>

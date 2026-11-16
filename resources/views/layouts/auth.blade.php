@@ -16,7 +16,7 @@
             <button class="menu-btn" type="button" aria-label="Open menu" data-menu-toggle>Menu</button>
             <nav class="nav-links" data-main-nav aria-label="Main navigation">
                 <a href="{{ url('/') }}">Home</a>
-                <a href="{{ url('/about.html') }}">About</a>
+                <a href="{{ route('about') }}">About</a>
                 <a href="{{ route('activities.index') }}">Activities</a>
                 <a href="{{ route('doctors.index') }}">Professional Consultancy</a>
                 <a href="{{ route('contact.create') }}">Contact</a>
@@ -82,12 +82,12 @@
                     </div>
 
                     @if (session('status'))
-                        <div class="alert alert-success auth-alert" role="status">{{ session('status') }}</div>
+                        <div class="site-feedback site-feedback--success auth-alert" role="status">{{ session('status') }}</div>
                     @endif
 
                     @if ($errors->any())
-                        <div class="alert alert-error auth-alert" role="alert">
-                            <strong>Please check the form.</strong>
+                        <div class="site-feedback site-feedback--error auth-alert" role="alert">
+                            <strong>{{ $errors->has('credentials') ? 'Sign-in unsuccessful.' : ($errors->has('access') ? 'Account access issue.' : 'Please check the form.') }}</strong>
                             <ul>
                                 @foreach ($errors->all() as $error)
                                     <li>{{ $error }}</li>

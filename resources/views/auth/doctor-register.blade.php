@@ -2,7 +2,7 @@
 
 @section('title', 'Doctor verification application')
 
-@section('shell_class', 'auth-shell--wide')
+@section('shell_class', 'auth-shell--simple auth-shell--signup')
 @section('card_class', 'auth-card--wide')
 
 @section('story_eyebrow', 'Join the professional network')
@@ -32,12 +32,12 @@
 @endsection
 
 @section('content')
-<div class="auth-note" style="margin-top:0; margin-bottom:20px;">
+<div class="auth-note auth-doctor-start-note">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 8h.01"/></svg>
     <span><strong>Before you start:</strong> have your medical license and qualification certificate ready. You can upload PDF, JPG, or PNG files up to 10 MB each.</span>
 </div>
 
-<form method="POST" action="{{ route('doctor.register.store') }}" enctype="multipart/form-data" class="auth-form">
+<form method="POST" action="{{ route('doctor.register.store') }}" enctype="multipart/form-data" class="auth-form auth-form--doctor">
     @csrf
 
     <fieldset>
@@ -137,12 +137,14 @@
             </div>
         </div>
 
-        <div class="form-row">
+        <div class="form-row auth-form-row--single">
             <div class="auth-field">
                 <label for="city">City</label>
                 <input id="city" name="city" value="{{ old('city') }}" placeholder="City" required>
                 @error('city')<p class="field-error">{{ $message }}</p>@enderror
             </div>
+        </div>
+        <div class="form-row auth-form-row--single">
             <div class="auth-field">
                 <label for="biography">Professional introduction <span class="muted">(optional)</span></label>
                 <textarea id="biography" name="biography" rows="3" maxlength="2000" placeholder="Tell families briefly about your approach and experience.">{{ old('biography') }}</textarea>
@@ -195,7 +197,7 @@
     </div>
 
     <div class="auth-submit-row">
-        <button class="btn btn-blue auth-submit" type="submit" style="margin-top:0;">Submit verification application</button>
+        <button class="btn btn-blue auth-submit" type="submit">Submit verification application</button>
     </div>
 </form>
 @endsection

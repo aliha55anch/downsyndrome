@@ -15,6 +15,7 @@ class ActivityProgress extends Model
         'activity_id',
         'status',
         'progress_percent',
+        'video_progress_percent',
         'sessions_count',
         'minutes_practiced',
         'engagement',

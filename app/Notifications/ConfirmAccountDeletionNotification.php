@@ -16,6 +16,18 @@ class ConfirmAccountDeletionNotification extends Notification
 
     public function toMail(object $notifiable): MailMessage
     {
-        return (new MailMessage)->subject('Confirm Little Steps account deletion')->line('If you requested account deletion, use the button below.')->action('Delete account', $this->url)->line('This link expires in 60 minutes. If you did not request this, ignore this message.');
+        return (new MailMessage)
+            ->subject('Confirm Little Steps account deletion')
+            ->view('emails.action', [
+                'brandName' => config('app.name', 'Little Steps'),
+                'title' => 'Confirm account deletion',
+                'eyebrow' => 'ACCOUNT SECURITY',
+                'intro' => 'A request was made to delete your Little Steps account. Confirm only if you want to continue.',
+                'actionLabel' => 'Delete my account',
+                'actionUrl' => $this->url,
+                'actionColor' => '#a43e3a',
+                'expiryText' => 'This secure confirmation link expires in 60 minutes.',
+                'safetyText' => 'If you did not request account deletion, ignore this email. Your account will remain active.',
+            ]);
     }
 }

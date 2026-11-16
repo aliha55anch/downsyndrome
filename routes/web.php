@@ -1,47 +1,53 @@
 <?php
 
+use App\Http\Controllers\ActivityController;
+use App\Http\Controllers\ActivityEnrollmentController;
+use App\Http\Controllers\ActivityProgressController;
+use App\Http\Controllers\ActivityResourceController;
+use App\Http\Controllers\Admin\ActivityController as AdminActivityController;
+use App\Http\Controllers\Admin\ActivityLessonController;
+use App\Http\Controllers\Admin\ActivitySectionController;
+use App\Http\Controllers\Admin\AppointmentManagementController;
+use App\Http\Controllers\Admin\ConsultationRequestController as AdminConsultationRequestController;
+use App\Http\Controllers\Admin\ContactMessageController;
+use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\DoctorManagementController;
+use App\Http\Controllers\Admin\DoctorProfileVisibilityController;
+use App\Http\Controllers\Admin\NotificationSendController;
+use App\Http\Controllers\Admin\RefundManagementController;
+use App\Http\Controllers\Admin\UserManagementController;
+use App\Http\Controllers\AppointmentBookingController;
+use App\Http\Controllers\AppointmentNotificationController;
+use App\Http\Controllers\AppointmentPrescriptionController;
+use App\Http\Controllers\ConsultationRequestController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\Auth\DoctorRegistrationController;
 use App\Http\Controllers\Auth\EmailVerificationController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
-use App\Http\Controllers\Auth\DoctorRegistrationController;
-use App\Http\Controllers\Admin\ContactMessageController;
-use App\Http\Controllers\Admin\DashboardController;
-use App\Http\Controllers\Admin\ActivityController as AdminActivityController;
-use App\Http\Controllers\Admin\UserManagementController;
-use App\Http\Controllers\Admin\DoctorManagementController;
-use App\Http\Controllers\Admin\ActivitySectionController;
-use App\Http\Controllers\Admin\ActivityLessonController;
-use App\Http\Controllers\ActivityController;
-use App\Http\Controllers\ActivityEnrollmentController;
-use App\Http\Controllers\ActivityResourceController;
+use App\Http\Controllers\ChildController;
 use App\Http\Controllers\ContactController;
-use App\Http\Controllers\ParentDashboardController;
-use App\Http\Controllers\ParentProfileController;
-use App\Http\Controllers\ActivityProgressController;
-use App\Http\Controllers\SettingsController;
+use App\Http\Controllers\Doctor\AppointmentController as DoctorAppointmentController;
+use App\Http\Controllers\Doctor\AvailabilityController as DoctorAvailabilityController;
 use App\Http\Controllers\Doctor\DashboardController as DoctorDashboardController;
-use App\Http\Controllers\Doctor\ProfileController as DoctorProfileController;
 use App\Http\Controllers\Doctor\DocumentController as DoctorDocumentController;
 use App\Http\Controllers\Doctor\NotificationController as DoctorNotificationController;
-use App\Http\Controllers\ChildController;
-use App\Http\Controllers\PublicDoctorController;
-use App\Http\Controllers\Doctor\AvailabilityController as DoctorAvailabilityController;
-use App\Http\Controllers\Admin\DoctorProfileVisibilityController;
-use App\Http\Controllers\AppointmentBookingController;
+use App\Http\Controllers\Doctor\ProfileController as DoctorProfileController;
 use App\Http\Controllers\ParentAppointmentController;
+use App\Http\Controllers\ParentDashboardController;
+use App\Http\Controllers\ParentProfileController;
+use App\Http\Controllers\PublicDoctorController;
 use App\Http\Controllers\SafepayWebhookController;
-use App\Http\Controllers\Doctor\AppointmentController as DoctorAppointmentController;
-use App\Http\Controllers\Admin\AppointmentManagementController;
-use App\Http\Controllers\Admin\RefundManagementController;
-use App\Http\Controllers\Admin\NotificationSendController;
-use App\Http\Controllers\AppointmentPrescriptionController;
+use App\Http\Controllers\SettingsController;
+use App\Models\User;
+use Illuminate\Notifications\DatabaseNotification;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return response()->file(public_path('index.html'));
+    return view('home');
 });
 
 Route::get('/api/health', function () {
@@ -52,15 +58,18 @@ Route::get('/api/health', function () {
 });
 
 Route::get('/api/session', function () {
-    if (! auth()->check()) {
+    if (! Auth::check()) {
         return response()->json(['authenticated' => false])->header('Cache-Control', 'no-store');
     }
 
-    $user = auth()->user();
-    $isParent = $user->hasRole(\App\Models\User::ROLE_PARENT);
+    $user = Auth::user();
+    $isParent = $user->role === User::ROLE_PARENT;
     $hasPicture = $isParent && $user->parentProfile?->profile_picture_path;
+    $notifications = DatabaseNotification::query()
+        ->where('notifiable_type', $user::class)
+        ->where('notifiable_id', $user->id);
     $recentNotifications = $isParent
-        ? $user->notifications()->latest()->limit(5)->get()->map(fn ($item) => [
+        ? (clone $notifications)->latest()->limit(5)->get()->map(fn ($item) => [
             'id' => $item->id,
             'title' => $item->data['title'] ?? 'Update',
             'message' => $item->data['message'] ?? '',
@@ -70,9 +79,9 @@ Route::get('/api/session', function () {
         ])->values()
         : [];
     $dashboardUrl = match ($user->role) {
-        \App\Models\User::ROLE_PARENT => route('dashboard'),
-        \App\Models\User::ROLE_PENDING_DOCTOR, \App\Models\User::ROLE_APPROVED_DOCTOR => route('doctor.dashboard'),
-        \App\Models\User::ROLE_ADMIN => route('admin.dashboard'),
+        User::ROLE_PARENT => route('dashboard'),
+        User::ROLE_PENDING_DOCTOR, User::ROLE_APPROVED_DOCTOR => route('doctor.dashboard'),
+        User::ROLE_ADMIN => route('admin.dashboard'),
         default => route('login'),
     };
 
@@ -83,7 +92,7 @@ Route::get('/api/session', function () {
         'dashboard_url' => $dashboardUrl,
         'avatar_url' => $hasPicture ? route('dashboard.profile.picture') : null,
         'csrf_token' => csrf_token(),
-        'unread_notifications_count' => $isParent ? $user->unreadNotifications()->count() : 0,
+        'unread_notifications_count' => $isParent ? (clone $notifications)->whereNull('read_at')->count() : 0,
         'recent_notifications' => $recentNotifications,
     ])->header('Cache-Control', 'no-store');
 });
@@ -91,9 +100,12 @@ Route::get('/api/session', function () {
 Route::redirect('/login.html', '/login');
 Route::redirect('/register.html', '/register');
 Route::redirect('/contact.html', '/contact');
+Route::redirect('/about.html', '/about');
 Route::redirect('/activities.html', '/activities');
 Route::redirect('/activity_detail.html', '/activities');
 Route::redirect('/admin_activities.html', '/admin/activities');
+Route::redirect('/parent_dashboard.html', '/dashboard');
+Route::redirect('/parent_child.html', '/dashboard/children');
 Route::redirect('/doctors.html', '/doctors');
 Route::get('/doctors', [PublicDoctorController::class, 'index'])->name('doctors.index');
 Route::get('/doctors/{doctorProfile}', [PublicDoctorController::class, 'show'])->name('doctors.show');
@@ -107,6 +119,7 @@ Route::get('/doctors/{doctorProfile}/book', [AppointmentBookingController::class
 Route::post('/webhooks/safepay', SafepayWebhookController::class)->middleware('throttle:120,1')->name('webhooks.safepay');
 
 Route::get('/contact', [ContactController::class, 'create'])->name('contact.create');
+Route::view('/about', 'about')->name('about');
 Route::post('/contact', [ContactController::class, 'store'])
     ->middleware('throttle:5,10')
     ->name('contact.store');
@@ -116,6 +129,7 @@ Route::get('/activities/{activity}/slideshow', [ActivityController::class, 'slid
 Route::get('/activities/{activity}', [ActivityController::class, 'show'])->name('activities.show');
 Route::get('/activities/{activity}/image', [ActivityController::class, 'image'])->name('activities.image');
 Route::get('/activities/{activity}/icon', [ActivityController::class, 'icon'])->name('activities.icon');
+Route::get('/activities/{activity}/video', [ActivityController::class, 'video'])->name('activities.video');
 Route::get('/activities/{activity}/sections/{section}/icon', [ActivityController::class, 'sectionIcon'])->name('activities.section-icon');
 Route::get('/activities/{activity}/sections/{section}/media', [ActivityController::class, 'sectionMedia'])->name('activities.section-media');
 Route::get('/activities/{activity}/download/{type}', [ActivityResourceController::class, 'download'])
@@ -174,7 +188,7 @@ Route::middleware(['auth', 'verified', 'role:pending_doctor,approved_doctor'])->
     Route::post('/documents', [DoctorDocumentController::class, 'store'])->name('documents.store');
     Route::post('/application/resubmit', [DoctorDocumentController::class, 'resubmit'])->name('application.resubmit');
     Route::patch('/notifications/{notification}/read', [DoctorNotificationController::class, 'read'])->name('notifications.read');
-    Route::patch('/notifications/read-all', [App\Http\Controllers\AppointmentNotificationController::class, 'readAll'])->name('notifications.read-all');
+    Route::patch('/notifications/read-all', [AppointmentNotificationController::class, 'readAll'])->name('notifications.read-all');
     Route::get('/notifications', [DoctorNotificationController::class, 'index'])->name('notifications.index');
 });
 Route::get('/doctor-documents/{document}', [DoctorDocumentController::class, 'download'])
@@ -198,8 +212,12 @@ Route::get('/email/verify/{id}/{hash}', [EmailVerificationController::class, 've
     ->middleware(['signed', 'throttle:6,1'])
     ->name('verification.verify');
 
-Route::get('/settings/email/verify/{id}/{token}', [SettingsController::class, 'verifyEmail'])->name('settings.email.verify');
-Route::get('/settings/delete/{id}/{token}', [SettingsController::class, 'confirmDeletion'])->name('settings.delete.confirm');
+Route::get('/settings/email/verify/{id}/{token}', [SettingsController::class, 'verifyEmail'])
+    ->middleware(['signed', 'throttle:6,1'])
+    ->name('settings.email.verify');
+Route::get('/settings/delete/{id}/{token}', [SettingsController::class, 'confirmDeletion'])
+    ->middleware(['signed', 'throttle:6,1'])
+    ->name('settings.delete.confirm');
 
 Route::middleware(['auth', 'verified', 'role:parent'])->group(function (): void {
     Route::post('/doctors/{doctorProfile}/book/review', [AppointmentBookingController::class, 'review'])->middleware('throttle:10,1')->name('appointments.review');
@@ -207,6 +225,11 @@ Route::middleware(['auth', 'verified', 'role:parent'])->group(function (): void 
     Route::post('/appointments/slot-holds/{hold}/release', [AppointmentBookingController::class, 'releaseSlot'])->name('appointments.slot-holds.release');
     Route::get('/appointment-history', [ParentAppointmentController::class, 'history'])->name('appointments.history');
     Route::get('/doctors-consulted', [ParentAppointmentController::class, 'doctorsConsulted'])->name('appointments.doctors-consulted');
+    Route::get('/consultation-requests', [ConsultationRequestController::class, 'mine'])->name('consultations.mine');
+    Route::get('/doctors/{doctorProfile}/consultation-request', [ConsultationRequestController::class, 'create'])->name('consultations.create');
+    Route::post('/doctors/{doctorProfile}/consultation-request', [ConsultationRequestController::class, 'store'])->middleware('throttle:10,1')->name('consultations.store');
+    Route::get('/consultation-requests/{consultationRequest}/payment-return', [ConsultationRequestController::class, 'paymentReturn'])->name('consultations.payment.return');
+    Route::get('/consultation-requests/{consultationRequest}/payment-cancel', [ConsultationRequestController::class, 'paymentReturn'])->name('consultations.payment.cancel');
     Route::get('/appointments/{appointment}', [ParentAppointmentController::class, 'show'])->name('appointments.show');
     Route::get('/appointments/{appointment}/slots', [ParentAppointmentController::class, 'slots'])->name('appointments.slots');
     Route::post('/appointments/{appointment}/cancel', [ParentAppointmentController::class, 'cancel'])->name('appointments.cancel');
@@ -214,9 +237,9 @@ Route::middleware(['auth', 'verified', 'role:parent'])->group(function (): void 
     Route::get('/appointments/{appointment}/payment-return', [AppointmentBookingController::class, 'paymentReturn'])->name('appointments.payment.return');
     Route::get('/appointments/{appointment}/payment-cancel', [AppointmentBookingController::class, 'paymentCancel'])->name('appointments.payment.cancel');
     Route::post('/appointments/{appointment}/payment-retry', [AppointmentBookingController::class, 'retryPayment'])->middleware('throttle:5,1')->name('appointments.payment.retry');
-    Route::get('/notifications', [App\Http\Controllers\AppointmentNotificationController::class, 'index'])->name('notifications.index');
-    Route::patch('/notifications/{notification}/read', [App\Http\Controllers\AppointmentNotificationController::class, 'read'])->name('notifications.read');
-    Route::patch('/notifications/read-all', [App\Http\Controllers\AppointmentNotificationController::class, 'readAll'])->name('notifications.read-all');
+    Route::get('/notifications', [AppointmentNotificationController::class, 'index'])->name('notifications.index');
+    Route::patch('/notifications/{notification}/read', [AppointmentNotificationController::class, 'read'])->name('notifications.read');
+    Route::patch('/notifications/read-all', [AppointmentNotificationController::class, 'readAll'])->name('notifications.read-all');
     Route::get('/prescriptions/{appointment}', [AppointmentPrescriptionController::class, 'show'])->name('prescriptions.show');
     Route::get('/prescriptions/{appointment}/download', [AppointmentPrescriptionController::class, 'download'])->name('prescriptions.download');
     Route::get('/payment-history', [ParentAppointmentController::class, 'paymentHistory'])->name('payments.history');
@@ -236,11 +259,12 @@ Route::middleware(['auth', 'verified', 'role:parent'])->group(function (): void 
     Route::post('/dashboard/progress/{activity}/tracking', [ActivityProgressController::class, 'setActivityTracking'])->name('dashboard.progress.tracking');
     Route::post('/dashboard/progress/{activity}/sections/{section}', [ActivityProgressController::class, 'toggleSection'])->name('dashboard.progress.section');
     Route::post('/dashboard/progress/{activity}/sections/{section}/track', [ActivityProgressController::class, 'trackSection'])->name('dashboard.progress.section.track');
+    Route::post('/dashboard/progress/{activity}/video', [ActivityProgressController::class, 'trackActivityVideo'])->name('dashboard.progress.video');
     Route::post('/dashboard/progress/{activity}/lessons/{lesson}/complete', [ActivityProgressController::class, 'completeLesson'])->name('dashboard.progress.lesson.complete');
     Route::post('/dashboard/progress/{activity}/complete', [ActivityProgressController::class, 'completeActivity'])->name('dashboard.progress.complete');
     Route::get('/dashboard/settings', [SettingsController::class, 'edit'])->name('dashboard.settings');
-    Route::post('/dashboard/settings/email', [SettingsController::class, 'requestEmailChange'])->name('dashboard.settings.email');
-    Route::post('/dashboard/settings/delete', [SettingsController::class, 'requestDeletion'])->name('dashboard.settings.delete');
+    Route::post('/dashboard/settings/email', [SettingsController::class, 'requestEmailChange'])->middleware('throttle:5,1')->name('dashboard.settings.email');
+    Route::post('/dashboard/settings/delete', [SettingsController::class, 'requestDeletion'])->middleware('throttle:5,1')->name('dashboard.settings.delete');
 });
 
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'verified', 'role:admin'])->group(function (): void {
@@ -252,9 +276,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'verified', 'role:ad
     Route::post('/appointments/{appointment}/resolve', [AppointmentManagementController::class, 'resolve'])->name('appointments.resolve');
     Route::get('/refunds', [RefundManagementController::class, 'index'])->name('refunds.index');
     Route::patch('/refunds/{refundCase}', [RefundManagementController::class, 'update'])->name('refunds.update');
-    Route::get('/notifications', [App\Http\Controllers\AppointmentNotificationController::class, 'index'])->name('notifications.index');
-    Route::patch('/notifications/{notification}/read', [App\Http\Controllers\AppointmentNotificationController::class, 'read'])->name('notifications.read');
-    Route::patch('/notifications/read-all', [App\Http\Controllers\AppointmentNotificationController::class, 'readAll'])->name('notifications.read-all');
+    Route::get('/notifications', [AppointmentNotificationController::class, 'index'])->name('notifications.index');
+    Route::patch('/notifications/{notification}/read', [AppointmentNotificationController::class, 'read'])->name('notifications.read');
+    Route::patch('/notifications/read-all', [AppointmentNotificationController::class, 'readAll'])->name('notifications.read-all');
     Route::get('/prescriptions/{appointment}', [AppointmentPrescriptionController::class, 'show'])->name('prescriptions.show');
     Route::get('/prescriptions/{appointment}/download', [AppointmentPrescriptionController::class, 'download'])->name('prescriptions.download');
     Route::get('/doctors', [DoctorManagementController::class, 'index'])->name('doctors.index');
@@ -263,8 +287,12 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'verified', 'role:ad
     Route::get('/doctor-specialties', [DoctorProfileVisibilityController::class, 'specialties'])->name('doctors.specialties');
     Route::post('/doctor-specialties', [DoctorProfileVisibilityController::class, 'storeSpecialty'])->name('doctors.specialties.store');
     Route::put('/doctor-specialties/{specialty}', [DoctorProfileVisibilityController::class, 'updateSpecialty'])->name('doctors.specialties.update');
+    Route::patch('/doctors/{doctorProfile}/consultation-fee', [AdminConsultationRequestController::class, 'updateDoctorFee'])->name('doctors.consultation-fee');
     Route::patch('/doctors/{doctorProfile}/status', [DoctorManagementController::class, 'updateStatus'])->name('doctors.status');
     Route::patch('/doctors/{doctorProfile}/documents/{document}', [DoctorManagementController::class, 'reviewDocument'])->name('doctors.documents.review');
+    Route::get('/consultation-requests', [AdminConsultationRequestController::class, 'index'])->name('consultations.index');
+    Route::get('/consultation-requests/{consultationRequest}', [AdminConsultationRequestController::class, 'show'])->name('consultations.show');
+    Route::patch('/consultation-requests/{consultationRequest}', [AdminConsultationRequestController::class, 'update'])->name('consultations.update');
     Route::resource('activities', AdminActivityController::class)->except(['show']);
     Route::get('/activities/{activity}/preview', [AdminActivityController::class, 'preview'])->name('activities.preview');
     Route::post('/activities/{activity}/publication', [AdminActivityController::class, 'publication'])->name('activities.publication');
@@ -298,4 +326,5 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'verified', 'role:ad
     Route::get('/messages', [ContactMessageController::class, 'index'])->name('messages.index');
     Route::get('/messages/{contactMessage}', [ContactMessageController::class, 'show'])->name('messages.show');
     Route::patch('/messages/{contactMessage}/read', [ContactMessageController::class, 'toggleRead'])->name('messages.read');
+    Route::delete('/messages/{contactMessage}', [ContactMessageController::class, 'destroy'])->name('messages.destroy');
 });

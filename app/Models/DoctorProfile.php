@@ -26,7 +26,7 @@ class DoctorProfile extends Model
 
     protected $fillable = [
         'phone', 'professional_title', 'specialty', 'qualification', 'institution',
-        'years_experience', 'workplace', 'city', 'biography', 'license_number',
+        'years_experience', 'consultation_fee', 'workplace', 'city', 'biography', 'license_number',
         'issuing_authority', 'license_expires_at', 'status', 'submitted_at',
         'reviewed_at', 'reviewed_by', 'rejection_reason', 'suspension_reason',
         'profile_photo_path', 'workplace_address', 'languages', 'timezone', 'is_public', 'availability_published_at',
@@ -34,7 +34,7 @@ class DoctorProfile extends Model
 
     protected function casts(): array
     {
-        return ['license_expires_at' => 'date', 'submitted_at' => 'datetime', 'reviewed_at' => 'datetime', 'availability_published_at' => 'immutable_datetime', 'languages' => 'array', 'is_public' => 'boolean'];
+        return ['license_expires_at' => 'date', 'submitted_at' => 'datetime', 'reviewed_at' => 'datetime', 'availability_published_at' => 'immutable_datetime', 'languages' => 'array', 'is_public' => 'boolean', 'consultation_fee' => 'decimal:2'];
     }
 
     public function user(): BelongsTo { return $this->belongsTo(User::class); }
@@ -49,6 +49,7 @@ class DoctorProfile extends Model
     public function specialties(): BelongsToMany { return $this->belongsToMany(MedicalSpecialty::class, 'doctor_profile_specialty')->orderBy('name'); }
     public function appointments(): HasMany { return $this->hasMany(Appointment::class); }
     public function appointmentSlots(): HasMany { return $this->hasMany(DoctorAppointmentSlot::class); }
+    public function consultationRequests(): HasMany { return $this->hasMany(ConsultationRequest::class); }
 
     public function scopePubliclyBookable(Builder $query): Builder
     {

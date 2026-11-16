@@ -213,6 +213,8 @@ function buildPatientNotificationBell(user) {
 }
 
 function buildNavbar(user) {
+  // Laravel's shared public layout renders its own navigation.
+  if (!document.getElementById("navbar")) return;
 
   // Which page are we on? Used to highlight the menu link.
   var page = window.location.pathname.split("/").pop();
@@ -227,7 +229,7 @@ function buildNavbar(user) {
 
   var links = [
     ["/", "Home"],
-    ["/about.html", "About"],
+    ["/about", "About"],
     ["/activities", "Activities"],
     ["/doctors", "Professional Consultancy"],
     ["/contact", "Contact"]
@@ -243,8 +245,8 @@ function buildNavbar(user) {
   if (user === null) {
     accountMenu = '<a href="' + appUrl('/login') + '">Login</a><a href="' + appUrl('/register') + '">Register</a>';
   } else {
-    var avatar = user.avatar_url ? '<img src="' + user.avatar_url + '" alt="">' : '<span>U</span>';
-    var account = '<details class="profile-menu"><summary class="profile-trigger" aria-label="Open account menu">' + avatar + '</summary><div class="profile-dropdown">';
+    var accountName = escapeText(user.name || 'Account');
+    var account = '<details class="profile-menu"><summary class="profile-trigger" aria-label="Open account menu for ' + accountName + '"><span class="profile-name">' + accountName + '</span></summary><div class="profile-dropdown">';
     account += '<a href="' + user.dashboard_url + '">' + (user.role === 'admin' ? 'Admin dashboard' : (user.role === 'pending_doctor' || user.role === 'approved_doctor' ? 'Doctor Dashboard' : 'My Dashboard')) + '</a>';
     account += '<form method="POST" action="/logout"><input type="hidden" name="_token" value="' + escapeText(user.csrf_token || '') + '"><button type="submit">Logout</button></form></div></details>';
     accountMenu = (user.role === 'parent' ? buildPatientNotificationBell(user) : '') + account;
@@ -285,7 +287,7 @@ function buildFooter() {
           '<p>A welcoming place for families to find learning activities and professional support.</p>' +
           '<p class="site-footer-note">Information on this site is general guidance, not medical advice.</p></section>' +
         '<nav class="site-footer-links" aria-label="Footer links"><h2>Explore</h2>' +
-          '<a href="/">Home</a><a href="/about.html">About us</a><a href="/activities">Activities</a>' +
+          '<a href="/">Home</a><a href="/about">About us</a><a href="/activities">Activities</a>' +
           '<a href="/doctors">Find a doctor</a><a href="/contact">Contact us</a></nav>' +
         '<section class="site-footer-contact"><h2>Contact</h2>' +
           '<p><span>Address</span> Placeholder, Karachi, Pakistan</p>' +

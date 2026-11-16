@@ -204,6 +204,15 @@
                                     {{ $doctor->qualification }}
                                 </li>
                             @endif
+                            <li>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                                Consultation fee:
+                                @if ($doctor->consultation_fee !== null)
+                                    {{ config('app.currency', 'PKR') }} {{ number_format((float) $doctor->consultation_fee, 2) }}
+                                @else
+                                    Not set
+                                @endif
+                            </li>
                         </ul>
 
                         <div class="pc-options">
@@ -236,7 +245,13 @@
                                     <span class="pc-options__more">+{{ $activeOptions->count() - 2 }} more option{{ $activeOptions->count() - 2 === 1 ? '' : 's' }}</span>
                                 @endif
                             @else
-                                <p class="pc-options__empty">Consultation options coming soon</p>
+                                <div class="pc-options__empty-wrap">
+                                    @if (auth()->guest() || auth()->user()->hasRole(\App\Models\User::ROLE_PARENT))
+                                        <p class="pc-options__empty">No specific options listed. You can still request a consultation below.</p>
+                                    @else
+                                        <p class="pc-options__empty">Consultation requests available to patient accounts.</p>
+                                    @endif
+                                </div>
                             @endif
                         </div>
                     </div>
@@ -247,8 +262,9 @@
                             @if ($activeOptions->isNotEmpty())
                                 <a class="pc-btn pc-btn--primary" href="{{ route('appointments.create', $doctor) }}">Book appointment</a>
                             @endif
+                            <a class="pc-btn {{ $activeOptions->isNotEmpty() ? 'pc-btn--outline' : 'pc-btn--primary' }}" href="{{ route('consultations.create', $doctor) }}">Request Consultation</a>
                         @else
-                            <span class="pc-doctor-card__hint">Patient accounts can book appointments.</span>
+                            <span class="pc-doctor-card__hint">Patient accounts can book or request consultations.</span>
                         @endif
                     </div>
                 </article>

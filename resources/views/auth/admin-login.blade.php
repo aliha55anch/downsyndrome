@@ -1,6 +1,7 @@
 @extends('layouts.auth')
 
 @section('title', 'Administrator login')
+@section('shell_class', 'auth-shell--simple')
 
 @section('story_eyebrow', 'Administration')
 @section('story_heading', 'Clear oversight. Secure access.')

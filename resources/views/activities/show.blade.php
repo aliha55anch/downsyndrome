@@ -1,6 +1,7 @@
 @extends('layouts.auth')
 
 @section('title', $activity->title)
+@section('shell_class', 'auth-shell--activity')
 
 @section('content')
 @if ($selectedLesson && $selectedLesson->sections->contains('content_type', 'powerpoint'))<link rel="stylesheet" href="{{ asset('assets/js/pptx-viewer.bundle.css') }}">@endif
@@ -15,9 +16,19 @@
         @if (auth()->user()->hasRole('parent'))
             @if ($enrollment)
                 <div class="activity-enrollment-banner">
-                    <div><span class="eyebrow">Your activity</span><strong>{{ $enrollment->status === 'completed' ? 'Completed' : ucfirst(str_replace('_', ' ', $enrollment->status)) }}</strong><span>{{ $enrollment->progress_percent }}% complete</span></div>
-                    <div class="progress-track" role="progressbar" aria-label="Activity progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ $enrollment->progress_percent }}"><span style="width:{{ $enrollment->progress_percent }}%"></span></div>
+                    <div><span class="eyebrow">Your activity</span><strong>{{ $enrollment->status === 'completed' ? 'Completed' : ucfirst(str_replace('_', ' ', $enrollment->status)) }}</strong><span data-activity-progress-text>{{ $enrollment->progress_percent }}% complete</span></div>
+                    <div class="progress-track" data-activity-progress-track role="progressbar" aria-label="Activity progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ $enrollment->progress_percent }}"><span style="width:{{ $enrollment->progress_percent }}%"></span></div>
                 </div>
+                @if ($selectedChild && $isTracking && $enrollment->status !== 'completed')
+                    @php($activityVideoRequired = (bool) ($activity->video_path || $activity->youtube_url))
+                    @php($activityCompletionUnlocked = (!$activityVideoRequired || $activityVideoProgressPercent >= 75) && $readyVideoSectionCount === $videoSectionCount)
+                    <form method="POST" action="{{ route('dashboard.progress.complete', $activity) }}" class="activity-complete-form" data-activity-completion-form data-activity-video-required="{{ $activityVideoRequired ? '1' : '0' }}" data-activity-video-unlocked="{{ $activityVideoProgressPercent >= 75 ? '1' : '0' }}" data-required-video-count="{{ $videoSectionCount }}" data-ready-video-count="{{ $readyVideoSectionCount }}">
+                        @csrf
+                        <input type="hidden" name="child_id" value="{{ $selectedChild->id }}">
+                        <p data-video-completion-hint>{{ $activityCompletionUnlocked ? 'Finished this activity together?' : 'Watch at least 75% of each activity video to unlock completion.' }}</p>
+                        <button class="btn btn-outline btn-small" type="submit" @disabled(!$activityCompletionUnlocked)>Mark activity complete</button>
+                    </form>
+                @endif
             @else
                 <form method="POST" action="{{ route('activities.enroll', $activity) }}" class="activity-enrollment-banner">
                     @csrf
@@ -128,7 +139,7 @@
     @foreach ($activity->sections as $section)
         @php($sectionState = $sectionStates->get($section->id))
         @php($sectionComplete = ($sectionState?->status ?? '') === 'completed')
-        <section id="section-{{ $section->id }}" class="activity-section" style="--section-color: {{ $section->color }}" @if($isTracking) data-track-section data-track-url="{{ route('dashboard.progress.section.track', [$activity, $section]) }}" data-child-id="{{ $selectedChild->id }}" data-content-type="{{ $section->content_type }}" data-completed="{{ $sectionComplete ? '1' : '0' }}" @endif>
+        <section id="section-{{ $section->id }}" class="activity-section" style="--section-color: {{ $section->color }}" @if($isTracking) data-track-section data-track-url="{{ route('dashboard.progress.section.track', [$activity, $section]) }}" data-child-id="{{ $selectedChild->id }}" data-content-type="{{ $section->content_type }}" data-completed="{{ $sectionComplete ? '1' : '0' }}" data-watched-percent="{{ $sectionState?->watched_percent ?? 0 }}" data-video-threshold-reached="{{ in_array($section->content_type, ['video', 'youtube'], true) && ($sectionState?->watched_percent ?? 0) >= 75 ? '1' : '0' }}" @endif>
             <div class="activity-section-bar">
                 @if ($section->icon_path)
                     <img src="{{ route('activities.section-icon', [$activity, $section]) }}" alt="">
@@ -148,7 +159,7 @@
                 @endif
             </div>
             @if ($isTracking)
-                <div class="section-completion-panel"><span class="section-progress-status" data-section-progress-status role="status">{{ $sectionComplete ? 'Completed' : 'Not completed' }}</span><form method="POST" action="{{ route('dashboard.progress.section', [$activity, $section]) }}">@csrf<input type="hidden" name="child_id" value="{{ $selectedChild->id }}"><input type="hidden" name="status" value="{{ $sectionComplete ? 'not_started' : 'completed' }}"><button class="btn btn-outline btn-small" type="submit">{{ $sectionComplete ? 'Reset section progress' : 'Mark section complete' }}</button></form></div>
+                <div class="section-completion-panel">@if(in_array($section->content_type, ['video', 'youtube'], true))<div class="progress-track section-video-progress-track" data-section-video-track role="progressbar" aria-label="Video watched" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ $sectionState?->watched_percent ?? 0 }}"><span style="width:{{ $sectionState?->watched_percent ?? 0 }}%"></span></div>@endif<span class="section-progress-status" data-section-progress-status role="status">{{ $sectionComplete ? 'Completed' : (in_array($section->content_type, ['video', 'youtube'], true) ? 'Video watched: '.($sectionState?->watched_percent ?? 0).'% · 75% needed' : 'Not completed') }}</span><form method="POST" action="{{ route('dashboard.progress.section', [$activity, $section]) }}">@csrf<input type="hidden" name="child_id" value="{{ $selectedChild->id }}"><input type="hidden" name="status" value="{{ $sectionComplete ? 'not_started' : 'completed' }}"><button class="btn btn-outline btn-small" type="submit" @disabled(in_array($section->content_type, ['video', 'youtube'], true) && ! $sectionComplete && ($sectionState?->watched_percent ?? 0) < 75)>{{ $sectionComplete ? 'Reset section progress' : 'Mark section complete' }}</button></form></div>
             @endif
         </section>
     @endforeach
@@ -179,14 +190,16 @@
                 @php($selectedLessonSectionCount = $selectedLesson->sections->count())
                 @php($selectedLessonSectionsComplete = $selectedLesson->sections->filter(fn ($section) => ($sectionStates->get($section->id)?->status ?? '') === 'completed')->count())
                 @php($selectedLessonStatus = $selectedLessonSectionCount && $selectedLessonSectionsComplete === $selectedLessonSectionCount ? 'completed' : ($lessonStates->get($selectedLesson->id)?->status ?? 'not_started'))
+                @php($lessonVideoSections = $selectedLesson->sections->filter(fn ($section) => in_array($section->content_type, ['video', 'youtube'], true)))
+                @php($lessonVideosReady = $lessonVideoSections->every(fn ($section) => (int) ($sectionStates->get($section->id)?->watched_percent ?? 0) >= 75))
                 <div class="lesson-completion-panel">
-                    <span class="hint">{{ $selectedLessonStatus === 'completed' ? 'Lesson completed for '.$selectedChild->name : 'Track this lesson for '.$selectedChild->name }}</span>
+                    <span class="hint" data-lesson-completion-hint>{{ $selectedLessonStatus === 'completed' ? 'Lesson completed for '.$selectedChild->name : ($lessonVideoSections->isNotEmpty() && ! $lessonVideosReady ? 'Watch at least 75% of each lesson video to unlock completion.' : 'Track this lesson for '.$selectedChild->name) }}</span>
                     @if ($selectedLessonStatus !== 'completed')
-                        <form method="POST" action="{{ route('dashboard.progress.lesson.complete', [$activity, $selectedLesson]) }}">
+                        <form method="POST" action="{{ route('dashboard.progress.lesson.complete', [$activity, $selectedLesson]) }}" data-lesson-completion-form>
                             @csrf
                             <input type="hidden" name="child_id" value="{{ $selectedChild->id }}">
                             <input type="hidden" name="lesson_id" value="{{ $selectedLesson->id }}">
-                            <button class="btn btn-blue btn-small" type="submit">Mark lesson complete</button>
+                            <button class="btn btn-blue btn-small" type="submit" @disabled(! $lessonVideosReady)>Mark lesson complete</button>
                         </form>
                     @else
                         <span class="completion-badge">Lesson complete</span>
@@ -197,7 +210,7 @@
                 @php($content = $section->content ?? [])
                 @php($sectionState = $sectionStates->get($section->id))
                 @php($sectionComplete = ($sectionState?->status ?? '') === 'completed')
-                <article id="section-{{ $section->id }}" class="activity-section" style="--section-color: {{ $section->color }}" @if($isTracking) data-track-section data-track-url="{{ route('dashboard.progress.section.track', [$activity, $section]) }}" data-child-id="{{ $selectedChild->id }}" data-content-type="{{ $section->content_type }}" data-completed="{{ $sectionComplete ? '1' : '0' }}" @endif>
+                <article id="section-{{ $section->id }}" class="activity-section" style="--section-color: {{ $section->color }}" @if($isTracking) data-track-section data-track-url="{{ route('dashboard.progress.section.track', [$activity, $section]) }}" data-child-id="{{ $selectedChild->id }}" data-content-type="{{ $section->content_type }}" data-completed="{{ $sectionComplete ? '1' : '0' }}" data-watched-percent="{{ $sectionState?->watched_percent ?? 0 }}" data-video-threshold-reached="{{ in_array($section->content_type, ['video', 'youtube'], true) && ($sectionState?->watched_percent ?? 0) >= 75 ? '1' : '0' }}" @endif>
                     <div class="activity-section-bar">
                         @if ($section->icon_path)<img src="{{ route('activities.section-icon', [$activity, $section]) }}" alt="">@endif
                         @if ($section->title)<div class="section-heading"><strong>{{ $section->title }}</strong></div>@endif
@@ -237,12 +250,13 @@
                     </div>
                     @if ($isTracking)
                         <div class="section-completion-panel">
-                            <span class="section-progress-status" data-section-progress-status role="status">{{ $sectionComplete ? 'Completed'.($sectionState?->completion_method ? ' · '.str_replace('_', ' ', $sectionState->completion_method) : '') : 'Not completed' }}</span>
+                            @if(in_array($section->content_type, ['video', 'youtube'], true))<div class="progress-track section-video-progress-track" data-section-video-track role="progressbar" aria-label="Video watched" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ $sectionState?->watched_percent ?? 0 }}"><span style="width:{{ $sectionState?->watched_percent ?? 0 }}%"></span></div>@endif
+                            <span class="section-progress-status" data-section-progress-status role="status">{{ $sectionComplete ? 'Completed'.($sectionState?->completion_method ? ' · '.str_replace('_', ' ', $sectionState->completion_method) : '') : (in_array($section->content_type, ['video', 'youtube'], true) ? 'Video watched: '.($sectionState?->watched_percent ?? 0).'% · 75% needed' : 'Not completed') }}</span>
                             <form method="POST" action="{{ route('dashboard.progress.section', [$activity, $section]) }}">
                                 @csrf
                                 <input type="hidden" name="child_id" value="{{ $selectedChild->id }}">
                                 <input type="hidden" name="status" value="{{ $sectionComplete ? 'not_started' : 'completed' }}">
-                                <button class="btn btn-outline btn-small" type="submit">{{ $sectionComplete ? 'Reset section progress' : 'Mark section complete' }}</button>
+                                <button class="btn btn-outline btn-small" type="submit" @disabled(in_array($section->content_type, ['video', 'youtube'], true) && ! $sectionComplete && ($sectionState?->watched_percent ?? 0) < 75)>{{ $sectionComplete ? 'Reset section progress' : 'Mark section complete' }}</button>
                             </form>
                         </div>
                     @endif
@@ -262,11 +276,13 @@
     @endif
 
     @if ($activity->parent_tips)
-        <div class="card"><h2>Tips for parents</h2><p>{{ $activity->parent_tips }}</p></div>
+        <div class="card activity-parent-tips"><h2>Tips for parents</h2><p>{{ $activity->parent_tips }}</p></div>
+    @endif
+    @if ($activity->video_path)
+        <section class="activity-video-section" data-activity-video-shell><h2>Watch this activity</h2><div class="activity-video-block"><video controls playsinline preload="metadata" @if($isTracking) data-activity-video data-progress-url="{{ route('dashboard.progress.video', $activity) }}" data-child-id="{{ $selectedChild->id }}" data-watched-percent="{{ $activityVideoProgressPercent }}" @endif><source src="{{ route('activities.video', $activity) }}">Your browser cannot play this video.</video></div>@if($isTracking)<div class="progress-track activity-video-progress-track" data-activity-video-track role="progressbar" aria-label="Video watched" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ $activityVideoProgressPercent }}"><span style="width:{{ $activityVideoProgressPercent }}%"></span></div><p class="activity-video-progress" data-activity-video-status role="status">Video watched: {{ $activityVideoProgressPercent }}%. Completion unlocks at 75%.</p>@elseif($selectedChild)<p class="hint">Track progress for this child to save video watch progress.</p>@endif</section>
     @endif
     @if ($activity->youtube_url)
-        <h2>Educational video</h2>
-        <div style="aspect-ratio:16/9; max-width:760px;"><iframe src="{{ $activity->youtube_url }}" title="Educational video" style="width:100%;height:100%;border:0;border-radius:12px;" allowfullscreen loading="lazy"></iframe></div>
+        <section class="activity-video-section" data-activity-video-shell><h2>Watch this activity</h2><div class="activity-video-block"><iframe @if($isTracking) data-activity-youtube data-progress-url="{{ route('dashboard.progress.video', $activity) }}" data-child-id="{{ $selectedChild->id }}" data-watched-percent="{{ $activityVideoProgressPercent }}" @endif src="{{ $activity->youtube_url }}{{ str_contains($activity->youtube_url, '?') ? '&' : '?' }}enablejsapi=1&amp;origin={{ urlencode(request()->getSchemeAndHttpHost()) }}" title="Educational video" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen loading="lazy"></iframe></div>@if($isTracking)<div class="progress-track activity-video-progress-track" data-activity-video-track role="progressbar" aria-label="Video watched" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ $activityVideoProgressPercent }}"><span style="width:{{ $activityVideoProgressPercent }}%"></span></div><p class="activity-video-progress" data-activity-video-status role="status">Video watched: {{ $activityVideoProgressPercent }}%. Completion unlocks at 75%.</p>@elseif($selectedChild)<p class="hint">Track progress for this child to save video watch progress.</p>@endif</section>
     @endif
 
     <div class="btn-row">
@@ -290,7 +306,102 @@
 (function () {
     var csrf = document.querySelector('meta[name="csrf-token"]')?.content;
     var sections = Array.from(document.querySelectorAll('[data-track-section]'));
-    if (!csrf || !sections.length) return;
+    if (!csrf) return;
+    var activityCompleteForm = document.querySelector('[data-activity-completion-form]');
+
+    function refreshActivityCompletionLock() {
+        if (!activityCompleteForm) return;
+        var activityVideoReady = activityCompleteForm.dataset.activityVideoRequired !== '1' || activityCompleteForm.dataset.activityVideoUnlocked === '1';
+        var sectionVideosReady = Number(activityCompleteForm.dataset.readyVideoCount || 0) >= Number(activityCompleteForm.dataset.requiredVideoCount || 0);
+        var unlocked = activityVideoReady && sectionVideosReady;
+        var button = activityCompleteForm.querySelector('button[type="submit"]');
+        var hint = activityCompleteForm.querySelector('[data-video-completion-hint]');
+        if (button) button.disabled = !unlocked;
+        if (hint) hint.textContent = unlocked ? 'Finished this activity together?' : 'Watch at least 75% of each activity video to unlock completion.';
+    }
+
+    function setActivityWatchProgress(percent) {
+        var video = document.querySelector('[data-activity-video], [data-activity-youtube]');
+        if (!video || !video.dataset.progressUrl || video.dataset.progressPending === '1') return;
+        var previous = Number(video.dataset.watchedPercent || 0);
+        percent = Math.max(previous, Math.min(99, Math.floor(percent)));
+        var thresholdJustReached = percent >= 75 && previous < 75;
+        if (percent <= previous || (!thresholdJustReached && percent < previous + 4)) return;
+        video.dataset.progressPending = '1';
+        fetch(video.dataset.progressUrl, {method:'POST', credentials:'same-origin', headers:{'Content-Type':'application/json','Accept':'application/json','X-CSRF-TOKEN':csrf}, body:JSON.stringify({child_id:Number(video.dataset.childId), watched_percent:percent})})
+            .then(function (response) { if (!response.ok) throw new Error(); return response.json(); })
+            .then(function (data) {
+                video.dataset.watchedPercent = String(data.watched_percent);
+                var status = document.querySelector('[data-activity-video-status]');
+                if (status) status.textContent = 'Video watched: ' + percent + '%. ' + (data.completion_unlocked ? 'Activity completion is unlocked.' : 'Completion unlocks at 75%.');
+                var videoTrack = document.querySelector('[data-activity-video-track]');
+                if (videoTrack) { videoTrack.setAttribute('aria-valuenow', percent); var videoFill = videoTrack.querySelector('span'); if (videoFill) videoFill.style.width = percent + '%'; }
+                if (activityCompleteForm && data.completion_unlocked) {
+                    activityCompleteForm.dataset.activityVideoUnlocked = '1';
+                    refreshActivityCompletionLock();
+                }
+                var track = document.querySelector('[data-activity-progress-track]');
+                if (track) {
+                    track.setAttribute('aria-valuenow', data.progress_percent);
+                    var fill = track.querySelector('span');
+                    if (fill) fill.style.width = data.progress_percent + '%';
+                }
+                var progressText = document.querySelector('[data-activity-progress-text]');
+                if (progressText) progressText.textContent = data.progress_percent + '% complete';
+            }).catch(function () {
+                var status = document.querySelector('[data-activity-video-status]');
+                if (status) status.textContent = 'Watch progress could not be saved yet. Keep watching and it will retry.';
+            }).finally(function () { delete video.dataset.progressPending; });
+    }
+
+    function playedPercent(video) {
+        if (!Number.isFinite(video.duration) || video.duration <= 0) return 0;
+        var seconds = 0;
+        for (var i = 0; i < video.played.length; i++) seconds += video.played.end(i) - video.played.start(i);
+        return Math.min(100, Math.floor((seconds / video.duration) * 100));
+    }
+
+    function saveSectionVideoProgress(section, percent) {
+        if (!section || section.dataset.completed === '1' || section.dataset.videoProgressPending === '1') return;
+        var previous = Number(section.dataset.watchedPercent || 0);
+        percent = Math.max(previous, Math.min(100, Math.floor(percent)));
+        if (percent < previous + 4 && percent < 75) return;
+        section.dataset.videoProgressPending = '1';
+        fetch(section.dataset.trackUrl, {method:'POST', credentials:'same-origin', headers:{'Content-Type':'application/json','Accept':'application/json','X-CSRF-TOKEN':csrf}, body:JSON.stringify({child_id:Number(section.dataset.childId), method:'video_progress', watched_percent:percent})})
+            .then(function (response) { if (!response.ok) throw new Error(); return response.json(); })
+            .then(function (data) {
+                section.dataset.watchedPercent = String(data.watched_percent);
+                var status = section.querySelector('[data-section-progress-status]');
+                if (status) status.textContent = data.watched_percent >= 75 ? 'Video watched: ' + data.watched_percent + '% · Section complete' : 'Video watched: ' + data.watched_percent + '% · 75% needed';
+                var videoTrack = section.querySelector('[data-section-video-track]');
+                if (videoTrack) { videoTrack.setAttribute('aria-valuenow', data.watched_percent); var videoFill = videoTrack.querySelector('span'); if (videoFill) videoFill.style.width = data.watched_percent + '%'; }
+                var button = section.querySelector('.section-completion-panel button');
+                if (button) {
+                    button.disabled = data.watched_percent < 75;
+                    if (data.watched_percent >= 75) button.textContent = 'Reset section progress';
+                }
+                var state = section.querySelector('.section-completion-panel [name="status"]');
+                if (state && data.watched_percent >= 75) state.value = 'not_started';
+                if (data.watched_percent >= 75) {
+                    section.dataset.completed = '1';
+                    if (section.dataset.videoThresholdReached !== '1') {
+                        section.dataset.videoThresholdReached = '1';
+                        if (activityCompleteForm) activityCompleteForm.dataset.readyVideoCount = String(Number(activityCompleteForm.dataset.readyVideoCount || 0) + 1);
+                    }
+                    refreshActivityCompletionLock();
+                    var lessonContent = section.closest('.selected-lesson-content');
+                    var lessonVideos = lessonContent ? Array.from(lessonContent.querySelectorAll('[data-track-section][data-content-type="video"], [data-track-section][data-content-type="youtube"]')) : [];
+                    var lessonReady = lessonVideos.every(function (item) { return Number(item.dataset.watchedPercent || 0) >= 75; });
+                    var lessonButton = lessonContent && lessonContent.querySelector('[data-lesson-completion-form] button');
+                    var lessonHint = lessonContent && lessonContent.querySelector('[data-lesson-completion-hint]');
+                    if (lessonButton && lessonReady) lessonButton.disabled = false;
+                    if (lessonHint && lessonReady) lessonHint.textContent = 'Video requirements met. You can now mark this lesson complete.';
+                }
+            }).catch(function () {
+                var status = section.querySelector('[data-section-progress-status]');
+                if (status) status.textContent = 'Watch progress could not be saved yet. Keep watching and it will retry.';
+            }).finally(function () { delete section.dataset.videoProgressPending; });
+    }
 
     function completeSection(section, method) {
         if (section.dataset.completed === '1' || section.dataset.completionPending === '1') return Promise.resolve();
@@ -305,7 +416,7 @@
             section.dataset.completed = '1';
             if (viewableSections) viewableSections.delete(section);
             var status = section.querySelector('[data-section-progress-status]');
-            if (status) status.textContent = method === 'video_ended' ? 'Video watched to the end' : 'Content viewed';
+            if (status) status.textContent = method === 'video_threshold' ? 'Video watched to 75% · Section complete' : 'Content viewed';
             var form = section.querySelector('.section-completion-panel form');
             if (form) {
                 form.querySelector('[name="status"]').value = 'not_started';
@@ -320,9 +431,12 @@
     }
 
     sections.forEach(function (section) {
-        if (section.dataset.completed === '1') return;
         var video = section.querySelector('[data-completion-video]');
-        if (video) video.addEventListener('ended', function () { completeSection(section, 'video_ended'); });
+        if (video && section.dataset.completed !== '1') {
+            var sessionBasePercent = Number(section.dataset.watchedPercent || 0);
+            video.addEventListener('timeupdate', function () { saveSectionVideoProgress(section, sessionBasePercent + playedPercent(video)); });
+        }
+        if (section.dataset.completed === '1') return;
         section.querySelectorAll('[data-content-open]').forEach(function (link) {
             link.addEventListener('click', function () { completeSection(section, 'content_viewed'); });
         });
@@ -372,17 +486,40 @@
         });
     }
 
-    var youtubeFrames = document.querySelectorAll('[data-youtube-completion]');
+    var youtubeFrames = document.querySelectorAll('[data-youtube-completion], [data-activity-youtube]');
+    var nativeActivityVideo = document.querySelector('[data-activity-video]');
+    if (nativeActivityVideo) {
+        var activitySessionBasePercent = Number(nativeActivityVideo.dataset.watchedPercent || 0);
+        nativeActivityVideo.addEventListener('timeupdate', function () { setActivityWatchProgress(activitySessionBasePercent + playedPercent(nativeActivityVideo)); });
+    }
     if (!youtubeFrames.length) return;
     function attachYoutubePlayers() {
         if (!window.YT || !window.YT.Player) return;
         youtubeFrames.forEach(function (frame) {
             var section = frame.closest('[data-track-section]');
-            if (!section || section.dataset.completed === '1' || frame.dataset.playerReady) return;
+            var isActivityVideo = frame.hasAttribute('data-activity-youtube');
+            if ((!section && !isActivityVideo) || (section && section.dataset.completed === '1') || frame.dataset.playerReady) return;
             frame.dataset.playerReady = '1';
-            new window.YT.Player(frame, {events: {onStateChange: function (event) {
-                if (event.data === window.YT.PlayerState.ENDED) completeSection(section, 'video_ended');
-            }}});
+            var duration = 0, watchedSeconds = (Number(frame.dataset.watchedPercent || section?.dataset.watchedPercent || 0) / 100) * 100, lastTime = null, timer = null;
+            function report() {
+                if (duration <= 0) return;
+                var percent = Math.min(100, Math.floor((watchedSeconds / duration) * 100));
+                if (isActivityVideo) setActivityWatchProgress(percent); else saveSectionVideoProgress(section, percent);
+            }
+            new window.YT.Player(frame, {events: {
+                onReady: function (event) { try { duration = event.target.getDuration(); watchedSeconds = (Number(frame.dataset.watchedPercent || section?.dataset.watchedPercent || 0) / 100) * duration; } catch (error) {} },
+                onStateChange: function (event) {
+                    if (event.data === window.YT.PlayerState.PLAYING) {
+                        try { lastTime = event.target.getCurrentTime(); duration = event.target.getDuration() || duration; } catch (error) { lastTime = null; }
+                        if (!timer) timer = window.setInterval(function () {
+                            try { var now = event.target.getCurrentTime(); if (lastTime !== null && now > lastTime && now - lastTime <= 2.5) watchedSeconds += now - lastTime; lastTime = now; report(); } catch (error) {}
+                        }, 1000);
+                    } else {
+                        if (timer) window.clearInterval(timer);
+                        timer = null; lastTime = null;
+                    }
+                }
+            }});
         });
     }
     if (window.YT && window.YT.Player) {

@@ -8,14 +8,17 @@
 @php($typeAliases = ['paragraph' => 'text', 'steps' => 'text', 'materials' => 'text', 'tips' => 'text', 'matching' => 'text', 'routine' => 'text', 'worksheet' => 'text', 'external_link' => 'text', 'presentation' => 'text'])
 @php($selectedType = old('content_type', $typeAliases[$savedType] ?? $savedType))
 @php($legacyType = $section->exists && ! in_array($savedType, $types, true))
-<div class="page-title"><h1>{{ $section->exists ? 'Edit' : 'Add' }} section</h1><p>{{ $inLesson ? 'Lesson '.$lesson->position.': '.$lesson->title : $activity->title }} · Save each section separately and keep the lesson in the order you choose.</p></div>
-<form method="POST" enctype="multipart/form-data" action="{{ $inLesson ? ($section->exists ? route('admin.activities.lessons.sections.update', [$activity, $lesson, $section]) : route('admin.activities.lessons.sections.store', [$activity, $lesson])) : ($section->exists ? route('admin.activities.sections.update', [$activity, $section]) : route('admin.activities.sections.store', $activity)) }}" class="form-box section-editor" data-section-builder data-current-media="{{ $content['media_path'] ?? '' }}" data-media-url="{{ $section->exists && ($content['media_path'] ?? null) ? route('activities.section-media', [$activity, $section]) : '' }}">
+<div class="page-title admin-dashboard-heading admin-lesson-page-heading">
+    <div><span class="eyebrow">{{ $inLesson ? $activity->title.' · '.$lesson->title : $activity->title }}</span><h1>{{ $section->exists ? 'Edit section' : 'Add section' }}</h1><p>Set the content type, add the section content, then save it in the lesson order.</p></div>
+    @if($inLesson)<a class="btn btn-outline" href="{{ route('admin.activities.lessons.edit', [$activity, $lesson]) }}">Back to lesson</a>@else<a class="btn btn-outline" href="{{ route('admin.activities.sections.index', $activity) }}">Back to sections</a>@endif
+</div>
+<form method="POST" enctype="multipart/form-data" action="{{ $inLesson ? ($section->exists ? route('admin.activities.lessons.sections.update', [$activity, $lesson, $section]) : route('admin.activities.lessons.sections.store', [$activity, $lesson])) : ($section->exists ? route('admin.activities.sections.update', [$activity, $section]) : route('admin.activities.sections.store', $activity)) }}" class="form-box section-editor admin-section-editor-form" data-section-builder data-current-media="{{ $content['media_path'] ?? '' }}" data-media-url="{{ $section->exists && ($content['media_path'] ?? null) ? route('activities.section-media', [$activity, $section]) : '' }}">
     @csrf
     @if ($section->exists) @method('PUT') @endif
     <label for="section-title">Section title <span class="hint">Optional</span></label>
     <input id="section-title" name="title" value="{{ old('title', $section->title) }}" maxlength="255">
     <input type="hidden" name="position" value="{{ old('position', $section->position ?: 1) }}">
-    @if ($legacyType)<div class="alert alert-success" role="status">This section was saved with the older “{{ str_replace('_', ' ', $savedType) }}” format. It remains intact until you save an edit. Choose a supported content type if you want to convert it.</div>@endif
+    @if ($legacyType)<div class="site-feedback site-feedback--success" role="status">This section was saved with the older “{{ str_replace('_', ' ', $savedType) }}” format. It remains intact until you save an edit. Choose a supported content type if you want to convert it.</div>@endif
     <label for="content-type">Content type</label>
     <select id="content-type" name="content_type" data-content-type required>
         <option value="">Choose a content type</option>

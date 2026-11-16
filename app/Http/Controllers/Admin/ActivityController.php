@@ -95,7 +95,7 @@ class ActivityController extends Controller
             if ($section->icon_path) Storage::disk('local')->delete($section->icon_path);
             if ($section->content['media_path'] ?? null) Storage::disk('local')->delete($section->content['media_path']);
         }
-        foreach ([$activity->featured_image_path, $activity->pptx_path, $activity->pdf_path] as $path) {
+        foreach ([$activity->featured_image_path, $activity->pptx_path, $activity->pdf_path, $activity->video_path] as $path) {
             if ($path) {
                 Storage::disk('local')->delete($path);
             }
@@ -148,6 +148,8 @@ class ActivityController extends Controller
             'status' => ['required', 'in:'.implode(',', Activity::STATUSES)],
             'save_action' => ['nullable', 'in:draft,published'],
             'youtube_url' => ['nullable', 'url', 'max:2048'],
+            'activity_video' => ['nullable', 'file', 'mimes:mp4,webm,ogv,ogg', 'max:51200'],
+            'remove_activity_video' => ['nullable', 'boolean'],
             'content_blocks' => ['nullable', 'json', 'max:50000'],
             'slides_json' => ['nullable', 'json', 'max:50000'],
             'featured_image' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
@@ -173,8 +175,13 @@ class ActivityController extends Controller
             throw \Illuminate\Validation\ValidationException::withMessages(['min_age' => 'Enter both minimum and maximum ages.']);
         }
 
+        if (! empty($validated['youtube_url']) && $request->hasFile('activity_video')) {
+            throw \Illuminate\Validation\ValidationException::withMessages(['activity_video' => 'Choose a video upload or a YouTube link, not both.']);
+        }
+
         $removeActivityIcon = (bool) ($validated['remove_activity_icon'] ?? false);
-        unset($validated['featured_image'], $validated['pptx'], $validated['pdf'], $validated['activity_icon'], $validated['remove_activity_icon'], $validated['content_blocks'], $validated['slides_json'], $validated['save_action']);
+        $removeActivityVideo = (bool) ($validated['remove_activity_video'] ?? false);
+        unset($validated['featured_image'], $validated['pptx'], $validated['pdf'], $validated['activity_video'], $validated['remove_activity_video'], $validated['activity_icon'], $validated['remove_activity_icon'], $validated['content_blocks'], $validated['slides_json'], $validated['save_action']);
         $validated['content_blocks'] = $blocks;
         $validated['published_at'] = $validated['status'] === Activity::STATUS_PUBLISHED
             ? ($activity->published_at ?? now())
@@ -187,6 +194,14 @@ class ActivityController extends Controller
                 }
                 $validated[$column] = $request->file($input)->store('activities', 'local');
             }
+        }
+
+        if ($request->hasFile('activity_video')) {
+            if ($activity->video_path) Storage::disk('local')->delete($activity->video_path);
+            $validated['video_path'] = $request->file('activity_video')->store('activity-videos', 'local');
+        } elseif (($removeActivityVideo || ! empty($validated['youtube_url'])) && $activity->video_path) {
+            Storage::disk('local')->delete($activity->video_path);
+            $validated['video_path'] = null;
         }
 
         if ($request->hasFile('activity_icon')) {
@@ -211,10 +226,22 @@ class ActivityController extends Controller
             'max_age' => ['required', 'integer', 'min:0', 'max:100', 'gte:min_age'],
             'development_area' => ['required', 'in:'.implode(',', Activity::DEVELOPMENT_AREAS)],
             'short_description' => ['required', 'string', 'max:500'],
+            'youtube_url' => ['nullable', 'url', 'max:2048'],
+            'activity_video' => ['nullable', 'file', 'mimes:mp4,webm,ogv,ogg', 'max:51200'],
+            'remove_activity_video' => ['nullable', 'boolean'],
         ]);
 
+        if (! empty($validated['youtube_url']) && $request->hasFile('activity_video')) {
+            throw \Illuminate\Validation\ValidationException::withMessages(['activity_video' => 'Choose a video upload or a YouTube link, not both.']);
+        }
+
+        if (! empty($validated['youtube_url'])) {
+            $validated['youtube_url'] = $this->youtubeEmbedUrl($validated['youtube_url']);
+        }
+
         $removeIcon = (bool) ($validated['remove_activity_icon'] ?? false);
-        unset($validated['activity_icon'], $validated['remove_activity_icon']);
+        $removeVideo = (bool) ($validated['remove_activity_video'] ?? false);
+        unset($validated['activity_icon'], $validated['remove_activity_icon'], $validated['activity_video'], $validated['remove_activity_video']);
         $activity->fill($validated);
 
         if ($request->hasFile('activity_icon')) {
@@ -223,6 +250,14 @@ class ActivityController extends Controller
         } elseif ($removeIcon && $activity->icon_path) {
             Storage::disk('local')->delete($activity->icon_path);
             $activity->icon_path = null;
+        }
+
+        if ($request->hasFile('activity_video')) {
+            if ($activity->video_path) Storage::disk('local')->delete($activity->video_path);
+            $activity->video_path = $request->file('activity_video')->store('activity-videos', 'local');
+        } elseif (($removeVideo || ! empty($validated['youtube_url'])) && $activity->video_path) {
+            Storage::disk('local')->delete($activity->video_path);
+            $activity->video_path = null;
         }
 
         $activity->save();

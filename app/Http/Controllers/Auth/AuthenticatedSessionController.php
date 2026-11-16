@@ -56,7 +56,7 @@ class AuthenticatedSessionController extends Controller
             RateLimiter::hit($key, 60);
 
             throw ValidationException::withMessages([
-                'email' => 'The provided credentials do not match our records.',
+                'credentials' => 'The email address or password is incorrect.',
             ]);
         }
 
@@ -68,7 +68,7 @@ class AuthenticatedSessionController extends Controller
             RateLimiter::clear($key);
 
             throw ValidationException::withMessages([
-                'email' => 'This account does not have administrator access. Use the family login or contact support.',
+                'access' => 'This account does not have administrator access. Use the family login or contact support.',
             ]);
         }
 
@@ -77,7 +77,7 @@ class AuthenticatedSessionController extends Controller
             RateLimiter::clear($key);
 
             throw ValidationException::withMessages([
-                'email' => 'This account is not registered as a healthcare professional. Apply for doctor verification or use the family login.',
+                'access' => 'This account is not registered as a healthcare professional. Apply for doctor verification or use the family login.',
             ]);
         }
 
@@ -86,7 +86,7 @@ class AuthenticatedSessionController extends Controller
             RateLimiter::clear($key);
 
             return back()->withInput($request->only('email'))->withErrors([
-                'email' => 'Please verify your email address before logging in.',
+                'access' => 'Please verify your email address before logging in.',
             ]);
         }
 

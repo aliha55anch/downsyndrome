@@ -36,7 +36,7 @@
 
         <aside class="care-hero__art" aria-label="Our response promise">
             <figure class="contact-hero-photo">
-                <img src="{{ asset('assets/images/hero.jpeg') }}" alt="A parent and child sharing a calm moment together" loading="eager">
+                <img src="{{ asset('assets/images/area-social.jpeg') }}" alt="A caregiver supporting children as they play and learn together" loading="eager">
                 <figcaption>
                     <span>Here to listen</span>
                     A thoughtful reply, not an automated loop.
@@ -133,7 +133,7 @@
 
                     <div class="care-field">
                         <label for="subject">Subject <span class="care-required" aria-hidden="true">*</span></label>
-                        <input type="text" id="subject" name="subject" value="{{ old('subject') }}" placeholder="What would you like to talk about?" required @class(['is-invalid' => $errors->has('subject')])>
+                        <input type="text" id="subject" name="subject" value="{{ old('subject', request('subject')) }}" placeholder="What would you like to talk about?" required @class(['is-invalid' => $errors->has('subject')])>
                         @error('subject')
                             <p class="care-field__error">{{ $message }}</p>
                         @enderror
@@ -141,7 +141,7 @@
 
                     <div class="care-field">
                         <label for="message">Your message <span class="care-required" aria-hidden="true">*</span></label>
-                        <textarea id="message" name="message" maxlength="5000" placeholder="Share a little detail so we can help you properly." required @class(['is-invalid' => $errors->has('message')])>{{ old('message') }}</textarea>
+                        <textarea id="message" name="message" maxlength="5000" placeholder="Share a little detail so we can help you properly." required @class(['is-invalid' => $errors->has('message')])>{{ old('message', request('message')) }}</textarea>
                         <div class="care-field__meta">
                             <span>Please avoid sharing private medical details.</span>
                             <span>Up to 5,000 characters</span>

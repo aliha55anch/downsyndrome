@@ -36,12 +36,12 @@
     </section>
 
     <section class="dashboard-panel">
-        <div class="panel-heading"><div><span class="eyebrow">Learning progress</span><h2>Enrolled activities</h2></div><span class="muted">Reading sections count after 6 seconds in view; videos count when playback ends or you mark them complete.</span></div>
+        <div class="panel-heading"><div><span class="eyebrow">Learning progress</span><h2>Enrolled activities</h2></div><span class="muted">Your child’s activity progress will appear here.</span></div>
         @forelse ($cards as $card)
             <article class="progress-activity">
                 <div class="panel-heading"><div><h3>{{ $card['activity']->title }}</h3><small>{{ $card['activity']->development_area }} · {{ ucfirst(str_replace('_', ' ', $card['status'])) }}</small></div><b>{{ $card['percent'] }}%</b></div>
                 <div class="progress-track"><span style="width:{{ $card['percent'] }}%"></span></div>
-                <p class="hint">{{ $card['total'] ? $card['completed'].' of '.$card['total'].' tracked learning items completed.' : 'Activity-level completion' }} @if ($card['total_lessons']) · {{ $card['completed_lessons'] }} of {{ $card['total_lessons'] }} lessons complete @endif · {{ $card['videos_completed'] }} video(s) watched to the end</p>
+                <p class="hint">{{ $card['total'] ? $card['completed'].' of '.$card['total'].' tracked sections completed.' : 'Activity-level progress' }} @if ($card['total_lessons']) · {{ $card['completed_lessons'] }} of {{ $card['total_lessons'] }} lessons complete @endif · {{ $card['videos_completed'] }} video(s) reached the 75% completion point @if($card['video_progress_percent'] > 0) · Activity video {{ $card['video_progress_percent'] }}% watched @endif</p>
                 @if ($card['lessons']->isNotEmpty())
                     <details class="lesson-progress-details">
                         <summary>View lesson progress</summary>
@@ -55,7 +55,7 @@
                 <a class="btn btn-outline btn-small" href="{{ route('activities.show', [$card['activity'], 'child_id' => $selectedChild->id]) }}">Open activity</a>
             </article>
         @empty
-            <p class="muted">No activities are enrolled for {{ $selectedChild->name }} yet. Enroll from the activity library to see progress here.</p>
+            <div class="progress-empty-state"><strong>No activities yet for {{ $selectedChild->name }}</strong><p>Browse the activity library and choose one to get started. Progress will appear here as your child takes part.</p><a class="btn btn-blue btn-small" href="{{ route('activities.index') }}">Browse activities</a></div>
         @endforelse
     </section>
 

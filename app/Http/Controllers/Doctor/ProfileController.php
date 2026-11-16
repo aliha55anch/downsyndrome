@@ -46,6 +46,7 @@ class ProfileController extends Controller
             'qualification' => ['required', 'string', 'max:180'],
             'institution' => ['required', 'string', 'max:180'],
             'years_experience' => ['required', 'integer', 'min:0', 'max:70'],
+            'consultation_fee' => ['nullable', 'numeric', 'min:0', 'max:99999999.99'],
             'workplace' => ['nullable', 'string', 'max:180'],
             'city' => ['required', 'string', 'max:120'],
             'biography' => ['nullable', 'string', 'max:2000'],
@@ -72,6 +73,9 @@ class ProfileController extends Controller
             }
             $data['languages'] = $languages->all();
             unset($data['languages_text']);
+        }
+        if (array_key_exists('consultation_fee', $data) && ($data['consultation_fee'] === '' || $data['consultation_fee'] === null)) {
+            $data['consultation_fee'] = null;
         }
         $user = $request->user();
         $statusChanged = false;

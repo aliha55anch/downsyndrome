@@ -116,6 +116,7 @@ class User extends Authenticatable implements MustVerifyEmail
             'email_verified_at' => 'datetime',
             'email_change_token_expires_at' => 'datetime',
             'deletion_token_expires_at' => 'datetime',
+            'password' => 'hashed',
         ];
     }
 }

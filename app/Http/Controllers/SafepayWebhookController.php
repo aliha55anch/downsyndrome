@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Appointment;
+use App\Models\ConsultationRequest;
 use App\Models\PaymentTransaction;
 use App\Models\PaymentWebhookEvent;
 use App\Models\PaymentRefund;
@@ -10,6 +11,7 @@ use App\Models\AppointmentRefundCase;
 use App\Models\DoctorAppointmentSlot;
 use App\Services\AppointmentEmailDispatcher;
 use App\Services\AppointmentLifecycleNotifier;
+use App\Services\ConsultationRequestEmailDispatcher;
 use App\Services\SafepayPaymentGateway;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -19,7 +21,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 class SafepayWebhookController extends Controller
 {
-    public function __invoke(Request $request, SafepayPaymentGateway $gateway, AppointmentEmailDispatcher $emails, AppointmentLifecycleNotifier $notifier): Response
+    public function __invoke(Request $request, SafepayPaymentGateway $gateway, AppointmentEmailDispatcher $emails, AppointmentLifecycleNotifier $notifier, ConsultationRequestEmailDispatcher $consultationEmails): Response
     {
         $raw = $request->getContent();
         if (! $gateway->verifiesWebhook($raw, $request->header('X-SFPY-SIGNATURE'))) {
@@ -46,7 +48,8 @@ class SafepayWebhookController extends Controller
 
         $notice = null;
         $changedAppointment = null;
-        $result = DB::transaction(function () use ($event, $eventType, $tracker, $payload, &$notice, &$changedAppointment): string {
+        $paidConsultationRequest = null;
+        $result = DB::transaction(function () use ($event, $eventType, $tracker, $payload, &$notice, &$changedAppointment, &$paidConsultationRequest): string {
             if ($tracker === '') {
                 $event->update(['processing_status' => 'ignored', 'rejection_reason' => 'missing_tracker', 'processed_at' => now()]);
                 return 'ignored';
@@ -66,6 +69,28 @@ class SafepayWebhookController extends Controller
                 return 'rejected';
             }
             $appointment = $payment->payable;
+            if ($appointment instanceof ConsultationRequest) {
+                if ($eventType === 'payment.refunded') {
+                    $event->update(['processing_status' => 'unsupported', 'rejection_reason' => 'consultation_refunds_not_configured', 'processed_at' => now()]);
+                    return 'unsupported';
+                }
+
+                if ($success && ! in_array($payment->status, [PaymentTransaction::PAID, 'partially_refunded', 'refunded'], true)) {
+                    $payment->update([
+                        'status' => PaymentTransaction::PAID, 'paid_at' => now(), 'failed_at' => null, 'failure_code' => null,
+                        'gateway_fee_minor' => data_get($payload, 'data.fee') !== null ? (int) data_get($payload, 'data.fee') : $payment->gateway_fee_minor,
+                        'gateway_net_minor' => data_get($payload, 'data.net') !== null ? (int) data_get($payload, 'data.net') : $payment->gateway_net_minor,
+                    ]);
+                    $appointment->update(['payment_status' => ConsultationRequest::PAYMENT_PAID]);
+                    $paidConsultationRequest = $appointment;
+                } elseif (in_array($eventType, ['payment.failed', 'payment.cancelled'], true) && $payment->status === PaymentTransaction::PENDING) {
+                    $payment->update(['status' => $eventType === 'payment.cancelled' ? PaymentTransaction::CANCELLED : PaymentTransaction::FAILED, 'failed_at' => now(), 'failure_code' => Str::limit($eventType, 120, '')]);
+                    $appointment->update(['payment_status' => ConsultationRequest::PAYMENT_FAILED]);
+                }
+
+                $event->update(['processing_status' => 'processed', 'processed_at' => now()]);
+                return 'processed';
+            }
             if (! $appointment instanceof Appointment) {
                 $event->update(['processing_status' => 'unsupported', 'rejection_reason' => 'unsupported_payable', 'processed_at' => now()]);
                 return 'unsupported';
@@ -141,6 +166,10 @@ class SafepayWebhookController extends Controller
             $event->update(['processing_status' => 'processed', 'processed_at' => now()]);
             return 'processed';
         });
+
+        if ($paidConsultationRequest) {
+            $consultationEmails->dispatch($paidConsultationRequest->fresh(), 'consultation_payment_succeeded');
+        }
 
         if ($notice && $changedAppointment) {
             if ($notice === 'payment_succeeded' && app(\App\Services\AppointmentMeetingService::class)->provision($changedAppointment->fresh())) {

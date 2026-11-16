@@ -55,6 +55,7 @@ class Activity extends Model
         'pptx_path',
         'pdf_path',
         'youtube_url',
+        'video_path',
         'content_blocks',
         'published_at',
     ];

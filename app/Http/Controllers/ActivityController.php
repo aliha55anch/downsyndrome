@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Activity;
 use App\Models\ActivitySectionProgress;
 use App\Models\ActivityLessonProgress;
+use App\Models\ActivityProgress;
 use App\Models\ActivityTrackingPreference;
 use App\Models\ActivityEnrollment;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -116,6 +117,7 @@ class ActivityController extends Controller
         $children = collect();
         $selectedChild = null;
         $isTracking = false;
+        $activityVideoProgressPercent = 0;
         $sectionStates = collect();
         $lessonStates = collect();
         if (auth()->check() && auth()->user()->hasRole('parent')) {
@@ -130,6 +132,9 @@ class ActivityController extends Controller
                     ->where('is_tracking', true)
                     ->exists();
                 if ($isTracking) {
+                    $activityVideoProgressPercent = (int) ActivityProgress::where('user_id', auth()->id())
+                        ->where('child_id', $selectedChild->id)->where('activity_id', $activity->id)
+                        ->value('video_progress_percent');
                     $sectionStates = ActivitySectionProgress::where('user_id', auth()->id())
                         ->where('child_id', $selectedChild->id)
                         ->whereIn('activity_section_id', $allSections->pluck('id'))
@@ -142,7 +147,15 @@ class ActivityController extends Controller
             }
         }
 
-        return view('activities.show', compact('activity', 'children', 'selectedChild', 'isTracking', 'sectionStates', 'lessonStates', 'allSections', 'selectedLesson', 'selectedSection', 'enrollment'));
+        $videoSectionIds = $allSections
+            ->filter(fn ($section) => in_array($section->content_type, ['video', 'youtube'], true))
+            ->pluck('id');
+        $videoSectionCount = $videoSectionIds->count();
+        $readyVideoSectionCount = $sectionStates
+            ->filter(fn ($state) => $videoSectionIds->contains($state->activity_section_id) && (int) $state->watched_percent >= 75)
+            ->count();
+
+        return view('activities.show', compact('activity', 'children', 'selectedChild', 'isTracking', 'activityVideoProgressPercent', 'videoSectionCount', 'readyVideoSectionCount', 'sectionStates', 'lessonStates', 'allSections', 'selectedLesson', 'selectedSection', 'enrollment'));
     }
 
     public function slideshow(Activity $activity): View
@@ -174,6 +187,14 @@ class ActivityController extends Controller
         $path = Storage::disk('local')->path($activity->icon_path);
         abort_unless(is_file($path), 404);
         return response()->file($path);
+    }
+
+    public function video(Activity $activity): BinaryFileResponse
+    {
+        abort_unless(($activity->isPublished() || auth()->user()?->isAdmin()) && $activity->video_path, 404);
+        $path = Storage::disk('local')->path($activity->video_path);
+        abort_unless(is_file($path), 404);
+        return response()->file($path, ['X-Content-Type-Options' => 'nosniff']);
     }
 
     public function sectionMedia(Activity $activity, \App\Models\ActivitySection $section): BinaryFileResponse

@@ -3,7 +3,7 @@
 /.env.*
 !/.env.example
 /auth.json
-
+.vscode
 # Composer dependencies and local installer
 /vendor/
 /composer.phar
@@ -30,6 +30,12 @@
 # Private user uploads and local test output
 /storage/app/private/
 /.phpunit.result.cache
+
+# Local database files
+*.sqlite
+*.sqlite-journal
+/database/*.sqlite
+/database/*.sqlite-journal
 
 # Test and editor artifacts
 /.phpunit.cache/

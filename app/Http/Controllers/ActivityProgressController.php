@@ -49,6 +49,11 @@ class ActivityProgressController extends Controller
         $child = $this->ownedChild($request, $request->integer('child_id'));
         $this->requireTracking($request, $activity, $child);
         $status = $request->validate(['status' => ['required', 'in:not_started,completed']])['status'];
+        if ($status === 'completed' && in_array($section->content_type, ['video', 'youtube'], true)) {
+            $watchedPercent = ActivitySectionProgress::where('user_id', $request->user()->id)
+                ->where('child_id', $child->id)->where('activity_section_id', $section->id)->value('watched_percent') ?? 0;
+            abort_unless($watchedPercent >= 75, 409, 'Watch at least 75% of this video before completing the section.');
+        }
 
         DB::transaction(function () use ($request, $activity, $section, $child, $status): void {
             $current = ActivitySectionProgress::firstOrNew([
@@ -95,20 +100,76 @@ class ActivityProgressController extends Controller
         abort_unless($activity->isPublished() && $section->activity_id === $activity->id && $this->trackable($section), 404);
         $data = $request->validate([
             'child_id' => ['required', 'integer'],
-            'method' => ['required', 'in:content_viewed,video_ended'],
+            'method' => ['required', 'in:content_viewed,video_progress'],
+            'watched_percent' => ['nullable', 'integer', 'min:0', 'max:100'],
         ]);
-        if ($data['method'] === 'video_ended') {
+        if ($data['method'] === 'video_progress') {
             abort_unless(in_array($section->content_type, ['video', 'youtube'], true), 422);
+        }
+        if ($data['method'] === 'video_progress') {
+            abort_unless(isset($data['watched_percent']), 422);
         }
         $child = $this->ownedChild($request, (int) $data['child_id']);
         $this->requireTracking($request, $activity, $child);
 
         DB::transaction(function () use ($request, $activity, $section, $child, $data): void {
-            $this->saveSectionCompletion($request, $child, $activity, $section, $data['method']);
+            if ($data['method'] === 'video_progress') {
+                $progress = ActivitySectionProgress::firstOrNew([
+                    'user_id' => $request->user()->id,
+                    'child_id' => $child->id,
+                    'activity_section_id' => $section->id,
+                ]);
+                $progress->fill([
+                    'activity_id' => $activity->id,
+                    'section_title_snapshot' => $section->title ?: 'Activity video',
+                    'watched_percent' => max((int) $progress->watched_percent, (int) $data['watched_percent']),
+                ])->save();
+                if ($progress->watched_percent >= 75) {
+                    $this->saveSectionCompletion($request, $child, $activity, $section, 'video_threshold');
+                }
+            } else {
+                $this->saveSectionCompletion($request, $child, $activity, $section, $data['method']);
+            }
             $this->recalculate($request, $child, $activity);
         });
 
-        return response()->json(['ok' => true, 'status' => 'completed', 'method' => $data['method']]);
+        $watchedPercent = ActivitySectionProgress::where('user_id', $request->user()->id)
+            ->where('child_id', $child->id)->where('activity_section_id', $section->id)->value('watched_percent') ?? 0;
+        return response()->json(['ok' => true, 'status' => $watchedPercent >= 75 ? 'completed' : 'in_progress', 'watched_percent' => (int) $watchedPercent, 'threshold' => 75]);
+    }
+
+    public function trackActivityVideo(Request $request, Activity $activity): JsonResponse
+    {
+        abort_unless($activity->isPublished() && ($activity->video_path || $activity->youtube_url), 404);
+        $data = $request->validate([
+            'child_id' => ['required', 'integer'],
+            'watched_percent' => ['required', 'integer', 'min:0', 'max:100'],
+        ]);
+        $child = $this->ownedChild($request, (int) $data['child_id']);
+        $this->requireTracking($request, $activity, $child);
+
+        $progress = ActivityProgress::firstOrNew([
+            'user_id' => $request->user()->id,
+            'child_id' => $child->id,
+            'activity_id' => $activity->id,
+        ]);
+        // Keep a watched-to-100 video in progress until the parent presses Complete.
+        $progress->video_progress_percent = max((int) $progress->video_progress_percent, min(99, (int) $data['watched_percent']));
+        $progress->last_practiced_on = today();
+        $progress->save();
+
+        $this->recalculate($request, $child, $activity);
+        $progress->refresh();
+        $overallPercent = (int) (ActivityProgress::where('user_id', $request->user()->id)
+            ->where('child_id', $child->id)->where('activity_id', $activity->id)->value('progress_percent') ?? 0);
+
+        return response()->json([
+            'ok' => true,
+            'watched_percent' => (int) $progress->video_progress_percent,
+            'completion_unlocked' => $progress->video_progress_percent >= 75,
+            'progress_percent' => $overallPercent,
+            'threshold' => 75,
+        ]);
     }
 
     public function completeLesson(Request $request, Activity $activity, ActivityLesson $lesson): RedirectResponse
@@ -121,6 +182,13 @@ class ActivityProgressController extends Controller
         abort_unless((int) $data['lesson_id'] === $lesson->id, 422);
         $child = $this->ownedChild($request, (int) $data['child_id']);
         $this->requireTracking($request, $activity, $child);
+        $videoSectionIds = $lesson->sections->filter(fn ($section) => in_array($section->content_type, ['video', 'youtube'], true))->pluck('id');
+        if ($videoSectionIds->isNotEmpty()) {
+            $watchedVideoIds = ActivitySectionProgress::where('user_id', $request->user()->id)
+                ->where('child_id', $child->id)->whereIn('activity_section_id', $videoSectionIds)
+                ->where('watched_percent', '>=', 75)->pluck('activity_section_id')->all();
+            abort_unless($videoSectionIds->diff($watchedVideoIds)->isEmpty(), 409, 'Watch at least 75% of each lesson video before completing this lesson.');
+        }
 
         DB::transaction(function () use ($request, $activity, $lesson, $child): void {
             $lessonState = ActivityLessonProgress::firstOrNew([
@@ -160,15 +228,78 @@ class ActivityProgressController extends Controller
 
     public function completeActivity(Request $request, Activity $activity): RedirectResponse
     {
-        abort_unless($activity->isPublished() && $this->sectionsFor($activity)->filter(fn ($section) => $this->trackable($section))->isEmpty() && $activity->lessons->isEmpty(), 404);
+        abort_unless($activity->isPublished(), 404);
         $child = $this->ownedChild($request, $request->integer('child_id'));
         $this->requireTracking($request, $activity, $child);
+        if ($activity->video_path || $activity->youtube_url) {
+            $watchedPercent = ActivityProgress::where('user_id', $request->user()->id)
+                ->where('child_id', $child->id)->where('activity_id', $activity->id)->value('video_progress_percent') ?? 0;
+            abort_unless($watchedPercent >= 75, 409, 'Watch at least 75% of this activity video before completing the activity.');
+        }
+        $activity->loadMissing(['sections' => fn ($query) => $query->whereNull('lesson_id'), 'lessons.sections']);
+        $videoSectionIds = $this->sectionsFor($activity)
+            ->filter(fn ($section) => in_array($section->content_type, ['video', 'youtube'], true))->pluck('id');
+        if ($videoSectionIds->isNotEmpty()) {
+            $watchedVideoIds = ActivitySectionProgress::where('user_id', $request->user()->id)
+                ->where('child_id', $child->id)->whereIn('activity_section_id', $videoSectionIds)
+                ->where('watched_percent', '>=', 75)->pluck('activity_section_id')->all();
+            abort_unless($videoSectionIds->diff($watchedVideoIds)->isEmpty(), 409, 'Watch at least 75% of each lesson video before completing the activity.');
+        }
         DB::transaction(function () use ($request, $child, $activity): void {
-            $summary = ActivityProgress::firstOrNew(['user_id' => $request->user()->id, 'child_id' => $child->id, 'activity_id' => $activity->id]);
-            $changed = $summary->status !== 'completed';
-            $summary->fill(['status' => 'completed', 'progress_percent' => 100, 'last_practiced_on' => today()])->save();
-            $this->syncEnrollment($request, $child, $activity, 100);
-            if ($changed) {
+            $previousStatus = ActivityProgress::where('user_id', $request->user()->id)
+                ->where('child_id', $child->id)->where('activity_id', $activity->id)->value('status');
+            $sections = $this->sectionsFor($activity)->filter(fn ($section) => $this->trackable($section));
+
+            foreach ($sections as $section) {
+                $alreadyCompleted = ActivitySectionProgress::where('user_id', $request->user()->id)
+                    ->where('child_id', $child->id)->where('activity_section_id', $section->id)
+                    ->where('status', 'completed')->exists();
+                if (! $alreadyCompleted) {
+                    $this->saveSectionCompletion($request, $child, $activity, $section, 'manual');
+                }
+            }
+
+            $videoSectionIds = $sections->filter(fn ($section) => in_array($section->content_type, ['video', 'youtube'], true))->pluck('id');
+            if ($videoSectionIds->isNotEmpty()) {
+                ActivitySectionProgress::where('user_id', $request->user()->id)
+                    ->where('child_id', $child->id)->whereIn('activity_section_id', $videoSectionIds)
+                    ->update(['watched_percent' => 100]);
+            }
+
+            foreach ($activity->lessons as $lesson) {
+                if ($lesson->sections->filter(fn ($section) => $this->trackable($section))->isNotEmpty()) {
+                    continue;
+                }
+                $lessonState = ActivityLessonProgress::firstOrNew([
+                    'user_id' => $request->user()->id,
+                    'child_id' => $child->id,
+                    'activity_lesson_id' => $lesson->id,
+                ]);
+                $wasComplete = $lessonState->status === 'completed';
+                $lessonState->fill(['activity_id' => $activity->id, 'status' => 'completed', 'completed_at' => $lessonState->completed_at ?? now()])->save();
+                if (! $wasComplete) {
+                    $this->recordEvent($request, $child, $activity, null, 'completed', 'manual', $lesson);
+                }
+            }
+
+            if ($sections->isNotEmpty() || $activity->lessons->isNotEmpty()) {
+                $this->recalculate($request, $child, $activity);
+            } else {
+                ActivityProgress::updateOrCreate(
+                    ['user_id' => $request->user()->id, 'child_id' => $child->id, 'activity_id' => $activity->id],
+                    ['status' => 'completed', 'progress_percent' => 100, 'last_practiced_on' => today()]
+                );
+                $this->syncEnrollment($request, $child, $activity, 100);
+            }
+
+            if ($activity->video_path || $activity->youtube_url) {
+                ActivityProgress::where('user_id', $request->user()->id)
+                    ->where('child_id', $child->id)->where('activity_id', $activity->id)
+                    ->update(['video_progress_percent' => 100]);
+                $this->recalculate($request, $child, $activity);
+            }
+
+            if ($previousStatus !== 'completed') {
                 $this->recordEvent($request, $child, $activity, null, 'completed', 'manual');
             }
         });
@@ -186,6 +317,13 @@ class ActivityProgressController extends Controller
             ? ActivityLessonProgress::where('user_id', $child->user_id)->where('child_id', $child->id)->whereIn('activity_lesson_id', $activity->lessons->pluck('id'))->get()->keyBy('activity_lesson_id')
             : collect();
         $completed = $states->where('status', 'completed')->count();
+        $sectionProgressPoints = $sections->sum(function (ActivitySection $section) use ($states): int {
+            $state = $states->get($section->id);
+            if (in_array($section->content_type, ['video', 'youtube'], true)) {
+                return min(100, (int) ($state?->watched_percent ?? 0));
+            }
+            return ($state?->status ?? '') === 'completed' ? 100 : 0;
+        });
         $lessons = $activity->lessons->map(function (ActivityLesson $lesson) use ($states, $lessonStates): array {
             $lessonSections = $lesson->sections->filter(fn ($section) => $this->trackable($section));
             $sectionCompleted = $lessonSections->filter(fn ($section) => ($states->get($section->id)?->status ?? '') === 'completed')->count();
@@ -204,8 +342,13 @@ class ActivityProgressController extends Controller
         $emptyLessonsCompleted = $emptyLessons->where('status', 'completed')->count();
         $total = $sections->count() + $emptyLessons->count();
         $completedUnits = $completed + $emptyLessonsCompleted;
-        $legacyStatus = $child ? ActivityProgress::where('user_id', $child->user_id)->where('child_id', $child->id)->where('activity_id', $activity->id)->value('status') : null;
-        $percent = $total ? (int) round(($completedUnits / $total) * 100) : ($legacyStatus === 'completed' ? 100 : 0);
+        $progress = $child ? ActivityProgress::where('user_id', $child->user_id)->where('child_id', $child->id)->where('activity_id', $activity->id)->first() : null;
+        $hasActivityVideo = (bool) ($activity->video_path || $activity->youtube_url);
+        $activityVideoPercent = (int) ($progress?->video_progress_percent ?? 0);
+        $totalUnits = $total + ($hasActivityVideo ? 1 : 0);
+        $percent = $totalUnits
+            ? (int) floor(($sectionProgressPoints + ($emptyLessonsCompleted * 100) + ($hasActivityVideo ? $activityVideoPercent : 0)) / $totalUnits)
+            : (($progress?->status ?? null) === 'completed' ? 100 : 0);
 
         return [
             'activity' => $activity,
@@ -214,11 +357,12 @@ class ActivityProgressController extends Controller
             'lessons' => $lessons,
             'completed_lessons' => $lessons->where('status', 'completed')->count(),
             'total_lessons' => $lessons->count(),
-            'videos_completed' => $states->where('completion_method', 'video_ended')->count(),
+            'videos_completed' => $sections->filter(fn ($section) => in_array($section->content_type, ['video', 'youtube'], true) && (int) ($states->get($section->id)?->watched_percent ?? 0) >= 75)->count() + ($hasActivityVideo && $activityVideoPercent >= 75 ? 1 : 0),
+            'video_progress_percent' => $activityVideoPercent,
             'completed' => $completedUnits,
             'total' => $total,
             'percent' => $percent,
-            'status' => $percent === 100 && ($total > 0 || $legacyStatus === 'completed') ? 'completed' : ($percent > 0 ? 'in_progress' : ($legacyStatus ?? 'not_started')),
+            'status' => $percent === 100 && ($totalUnits > 0 || ($progress?->status ?? null) === 'completed') ? 'completed' : ($percent > 0 ? 'in_progress' : ($progress?->status ?? 'not_started')),
         ];
     }
 
@@ -251,6 +395,13 @@ class ActivityProgressController extends Controller
             ? ActivitySectionProgress::where('user_id', $request->user()->id)->where('child_id', $child->id)->whereIn('activity_section_id', $sections->pluck('id'))->get()->keyBy('activity_section_id')
             : collect();
         $completedSections = $sectionStates->where('status', 'completed')->count();
+        $sectionProgressPoints = $sections->sum(function (ActivitySection $section) use ($sectionStates): int {
+            $state = $sectionStates->get($section->id);
+            if (in_array($section->content_type, ['video', 'youtube'], true)) {
+                return min(100, (int) ($state?->watched_percent ?? 0));
+            }
+            return ($state?->status ?? '') === 'completed' ? 100 : 0;
+        });
 
         foreach ($activity->lessons as $lesson) {
             $lessonSections = $lesson->sections->filter(fn ($section) => $this->trackable($section));
@@ -283,18 +434,21 @@ class ActivityProgressController extends Controller
             : collect();
         $emptyLessonCount = $activity->lessons->filter(fn ($lesson) => $lesson->sections->filter(fn ($section) => $this->trackable($section))->isEmpty())->count();
         $completedEmptyLessons = $activity->lessons->filter(fn ($lesson) => $lesson->sections->filter(fn ($section) => $this->trackable($section))->isEmpty() && ($lessonStates->get($lesson->id)?->status ?? '') === 'completed')->count();
-        $total = $sections->count() + $emptyLessonCount;
+        $activityProgress = ActivityProgress::firstOrNew([
+            'user_id' => $request->user()->id,
+            'child_id' => $child->id,
+            'activity_id' => $activity->id,
+        ]);
+        $hasActivityVideo = (bool) ($activity->video_path || $activity->youtube_url);
+        $total = $sections->count() + $emptyLessonCount + ($hasActivityVideo ? 1 : 0);
         $completed = $completedSections + $completedEmptyLessons;
-        $percent = $total ? (int) round(($completed / $total) * 100) : 0;
+        $percent = $total ? (int) floor(($sectionProgressPoints + ($completedEmptyLessons * 100) + ($hasActivityVideo ? (int) $activityProgress->video_progress_percent : 0)) / $total) : 0;
 
-        ActivityProgress::updateOrCreate(
-            ['user_id' => $request->user()->id, 'child_id' => $child->id, 'activity_id' => $activity->id],
-            [
-                'status' => $percent === 100 && $total > 0 ? 'completed' : ($percent > 0 ? 'in_progress' : 'not_started'),
-                'progress_percent' => $percent,
-                'last_practiced_on' => today(),
-            ]
-        );
+        $activityProgress->fill([
+            'status' => $percent === 100 && $total > 0 ? 'completed' : ($percent > 0 ? 'in_progress' : 'not_started'),
+            'progress_percent' => $percent,
+            'last_practiced_on' => today(),
+        ])->save();
         $this->syncEnrollment($request, $child, $activity, $percent);
     }
 

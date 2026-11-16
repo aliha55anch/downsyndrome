@@ -1,6 +1,7 @@
 @extends('layouts.auth')
 
 @section('title', 'Create account')
+@section('shell_class', 'auth-shell--simple')
 
 @section('role_label', 'Family & caregiver')
 @section('form_heading', 'Create your free account')

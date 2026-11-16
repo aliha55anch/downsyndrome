@@ -16,7 +16,7 @@
             <button class="menu-btn" type="button" aria-label="Open menu" aria-expanded="false" data-menu-toggle>Menu</button>
             <nav class="nav-links" data-main-nav aria-label="Main navigation">
                 <a href="{{ url('/') }}">Home</a>
-                <a href="{{ url('/about.html') }}">About</a>
+                <a href="{{ route('about') }}">About</a>
                 <a href="{{ route('activities.index') }}" aria-current="page">Activities</a>
                 <a href="{{ route('doctors.index') }}">Professional Consultancy</a>
                 <a href="{{ route('contact.create') }}">Contact</a>
@@ -41,13 +41,13 @@
     <main class="activity-main">
         @if (session('status'))
             <div class="container">
-                <div class="alert alert-success activity-alert" role="status">{{ session('status') }}</div>
+                <div class="site-feedback site-feedback--success activity-alert" role="status">{{ session('status') }}</div>
             </div>
         @endif
 
         @if ($errors->any())
             <div class="container">
-                <div class="alert alert-error activity-alert" role="alert">
+                <div class="site-feedback site-feedback--error activity-alert" role="alert">
                     <strong>Please check the form.</strong>
                     <ul>
                         @foreach ($errors->all() as $error)
@@ -72,7 +72,7 @@
                 <nav class="site-footer-links" aria-label="Footer links">
                     <h2>Explore</h2>
                     <a href="{{ url('/') }}">Home</a>
-                    <a href="{{ url('/about.html') }}">About us</a>
+                    <a href="{{ route('about') }}">About us</a>
                     <a href="{{ route('activities.index') }}">Activities</a>
                     <a href="{{ route('doctors.index') }}">Find a doctor</a>
                     <a href="{{ route('contact.create') }}">Contact us</a>

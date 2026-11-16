@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\AppointmentEmail;
+use App\Models\ConsultationRequestEmail;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use RuntimeException;
@@ -46,9 +47,51 @@ class GoogleAppsScriptMailer
         return true;
     }
 
+    public function sendConsultationRequestMessage(ConsultationRequestEmail $message): bool
+    {
+        $url = (string) config('services.google_apps_script.web_app_url');
+        $secret = (string) config('services.google_apps_script.shared_secret');
+        if ($url === '' || $secret === '') {
+            Log::notice('Consultation request email remains in the outbox because Google Apps Script is not configured.', ['outbox_id' => $message->id]);
+            return false;
+        }
+
+        $message->loadMissing(['consultationRequest.patient', 'consultationRequest.doctorProfile.user', 'recipient']);
+        $snapshot = $message->snapshot ?? [];
+        $logoUrl = config('mail.logo_url');
+        if ($logoUrl && ! str_starts_with(strtolower((string) $logoUrl), 'https://')) $logoUrl = null;
+        $html = view('emails.consultation-request', [
+            'message' => $message,
+            'snapshot' => $snapshot,
+            'brandName' => config('app.name', 'Little Steps'),
+            'logoUrl' => $logoUrl,
+        ])->render();
+        $payload = [
+            'event_key' => $message->event_key,
+            'to' => $message->recipient->email,
+            'sender_name' => config('mail.from.name', config('app.name', 'Little Steps')),
+            'reply_to' => config('mail.reply_to.address'),
+            'subject' => $this->subject($message->email_type),
+            'html' => $html,
+            'text' => trim(preg_replace('/\\s+/', ' ', strip_tags($html)) ?? ''),
+        ];
+        $payloadJson = json_encode($payload, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        $response = Http::acceptJson()->asJson()->connectTimeout(8)->timeout(30)->post($url, [
+            'payload' => $payloadJson,
+            'signature' => hash_hmac('sha256', $payloadJson, $secret),
+        ]);
+        if (! $response->successful() || $response->json('ok') !== true) {
+            throw new RuntimeException('Google Apps Script did not accept the consultation request email (HTTP '.$response->status().').');
+        }
+        $message->update(['status' => 'sent', 'sent_at' => now(), 'last_error' => null]);
+        return true;
+    }
+
     private function subject(string $type): string
     {
         return match (true) {
+            $type === 'consultation_request_received' => 'Consultation request receipt',
+            $type === 'consultation_payment_succeeded' => 'Consultation payment receipt',
             $type === 'booking_initiated' => 'Appointment checkout started',
             $type === 'appointment_confirmed' => 'Your appointment is confirmed',
             $type === 'payment_failed' => 'Appointment payment needs attention',

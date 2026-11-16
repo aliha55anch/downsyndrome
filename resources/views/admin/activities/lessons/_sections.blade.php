@@ -1,5 +1,5 @@
-<section class="form-box lesson-section-builder">
-    <div class="panel-heading"><div><span class="eyebrow">Lesson content</span><h2>Sections</h2></div><a class="btn btn-blue btn-small" href="{{ route('admin.activities.lessons.sections.create', [$activity, $lesson, 'position' => 1]) }}">+ Add Section Here</a></div>
+<section class="admin-panel lesson-section-builder">
+    <div class="panel-heading"><div><span class="eyebrow">Lesson content</span><h2>{{ $lesson->sections->count() }} {{ \Illuminate\Support\Str::plural('section', $lesson->sections->count()) }}</h2><p>Arrange the content families will work through in this lesson.</p></div><a class="btn btn-blue btn-small" href="{{ route('admin.activities.lessons.sections.create', [$activity, $lesson, 'position' => 1]) }}">+ Add section</a></div>
     <p class="hint">Add content at the beginning, between sections, or after the last section. Drag sections to change their order.</p>
     <div data-sortable-sections data-reorder-url="{{ route('admin.activities.lessons.sections.reorder', [$activity, $lesson]) }}" data-csrf="{{ csrf_token() }}">
         @forelse ($lesson->sections as $section)

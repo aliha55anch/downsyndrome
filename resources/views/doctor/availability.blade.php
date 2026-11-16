@@ -1,8 +1,35 @@
 @extends('layouts.doctor')
 @section('title', 'Consultations and availability')
 @section('heading', 'Consultations and availability')
+
+@push('styles')
+<style>
+.doctor-availability-edit { display: grid; gap: 1rem; max-width: 1100px; }
+.doctor-availability-edit .page-intro { margin: 0; }
+.doctor-availability-edit .page-intro p { margin: 0; }
+.doctor-availability-edit .doctor-panel { margin: 0; }
+.doctor-availability-edit .doctor-panel h2 { margin: 0 0 .35rem; font-size: 1.15rem; color: #1d3d49; }
+.doctor-availability-edit .doctor-panel > p { margin: 0 0 .9rem; color: var(--ui-muted, #64748b); }
+.doctor-availability-edit .doctor-panel h3 { margin: 1rem 0 .5rem; font-size: 1rem; color: #1d3d49; }
+.doctor-availability-edit .form-row { margin-bottom: .25rem; }
+.doctor-availability-edit fieldset.availability-option,
+.doctor-availability-edit fieldset.schedule-row { border: 1px solid #cbd9df; border-radius: 12px; padding: 1rem 1.1rem; margin: .85rem 0; background: #fff; }
+.doctor-availability-edit fieldset legend { font-weight: 700; padding: 0 .35rem; color: #314b55; }
+.doctor-availability-edit .inline-check { display: inline-flex; align-items: center; gap: .5rem; margin: .35rem 0; font-weight: 600; color: #314b55; }
+.doctor-availability-edit .doctor-document-row { display: flex; justify-content: space-between; gap: 1rem; align-items: flex-start; padding: .85rem 1rem; border: 1px solid var(--ui-line, #e5e7eb); border-radius: 12px; margin-top: .6rem; background: #fff; }
+.doctor-availability-edit .doctor-document-row p { margin: .2rem 0 0; color: var(--ui-muted, #64748b); }
+.doctor-availability-edit .availability-calendar { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: .75rem; margin-top: .5rem; }
+.doctor-availability-edit .calendar-day { border: 1px solid var(--ui-line, #e5e7eb); border-radius: 12px; padding: .75rem .85rem; background: #fff; display: grid; gap: .3rem; }
+.doctor-availability-edit .calendar-day strong { color: #1d3d49; }
+@media (max-width: 700px) { .doctor-availability-edit .doctor-document-row { flex-direction: column; } }
+</style>
+@endpush
+
 @section('doctor-content')
-<p class="muted">Patients can book from your published profile using the consultation options and working periods configured here. Times are shown in {{ $profile->timezone }}.</p>
+<div class="doctor-availability-edit">
+<section class="doctor-panel page-intro">
+    <p>Manage your professional consultancy options and availability. Patients can book from your published profile using the consultation options and working periods configured here. Times are shown in <strong>{{ $profile->timezone }}</strong>.</p>
+</section>
 <section class="doctor-panel"><h2>Consultation options</h2><p>Configure only the ways you offer consultations. Fees are displayed in {{ config('app.currency', 'PKR') }} and no payment is collected here.</p>
 <form method="POST" action="{{ route('doctor.availability.consultations') }}">@csrf @method('PUT')
 @foreach(['online'=>'Online consultation','in_person'=>'In-person consultation'] as $type=>$label)@php($option=$options->firstWhere('type',$type))
@@ -26,6 +53,7 @@
 
 <section class="doctor-panel"><h2>Availability calendar · {{ now($profile->timezone)->format('F Y') }}</h2><p>Open intervals below include recurring working periods minus breaks and saved unavailable periods.</p><div class="availability-calendar">@foreach($calendar as $day)<article class="calendar-day"><strong>{{ \Carbon\CarbonImmutable::parse($day['date'], $profile->timezone)->format('D, M j') }}</strong>@forelse($day['intervals'] as $interval)<span>{{ $interval['start']->format('g:i A') }} – {{ $interval['end']->format('g:i A') }}</span>@empty<span class="muted">Unavailable</span>@endforelse</article>@endforeach</div></section>
 <section class="doctor-panel"><h2>Publication status</h2>@if($profile->availability_published_at)<p>Published {{ $profile->availability_published_at->timezone($profile->timezone)->format('M j, Y g:i A') }}. Weekly schedule edits become drafts and require republishing.</p>@else<p>Your weekly hours are a draft and are not visible as bookable times to patients.</p>@endif<form method="POST" action="{{ route('doctor.availability.publish') }}">@csrf<button class="btn btn-blue" type="submit">Publish schedule</button></form></section>
+</div>
 <script>
 let periodIndex=document.querySelectorAll('#period-list .schedule-row').length;
 const slotOption=document.getElementById('slot-option');function updateSlotFields(){if(!slotOption)return;const online=slotOption.selectedOptions[0]?.dataset.type==='online';document.getElementById('meeting-url-field').hidden=!online;document.getElementById('clinic-location-field').hidden=online;document.getElementById('slot-meeting-url').required=online;document.getElementById('slot-clinic-location').required=!online;}slotOption?.addEventListener('change',updateSlotFields);updateSlotFields();

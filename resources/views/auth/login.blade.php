@@ -1,6 +1,7 @@
 @extends('layouts.auth')
 
 @section('title', 'Login')
+@section('shell_class', 'auth-shell--simple')
 
 @section('role_label', 'Family & caregiver')
 @section('form_heading', 'Welcome back')

@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\PaymentTransaction;
 use App\Models\Appointment;
+use App\Models\ConsultationRequest;
 use App\Models\DoctorAppointmentSlot;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
@@ -85,6 +86,10 @@ class PaymentService
                 ]);
 
                 $payable = $lockedPayment->payable;
+                if ($payable instanceof ConsultationRequest) {
+                    $payable->update(['payment_status' => ConsultationRequest::PAYMENT_FAILED]);
+                    return;
+                }
                 if (! $payable instanceof Appointment) return;
 
                 $lockedAppointment = Appointment::whereKey($payable->id)->lockForUpdate()->first();

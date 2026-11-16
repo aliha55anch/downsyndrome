@@ -2,6 +2,8 @@
 @section('title', 'Profile preview')
 @section('heading', 'Profile preview')
 @section('doctor-content')
+<link rel="stylesheet" href="{{ asset('assets/css/consultancy.css') }}">
+<link rel="stylesheet" href="{{ asset('assets/css/doctor-profile.css') }}">
 @if(!$profile->isPubliclyBookable())
     <section class="doctor-panel doctor-callout"><h2>This profile is not public yet</h2><p>This is how the profile will look on the doctor directory. Only approved and published profiles appear to patients.</p></section>
 @endif

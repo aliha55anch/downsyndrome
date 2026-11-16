@@ -10,6 +10,14 @@
 <header class="dashboard-site-bar">
     <a class="dashboard-site-link" href="{{ url('/') }}"><span aria-hidden="true">←</span> Back to main website</a>
     <span class="dashboard-site-label">Little Steps · Parent space</span>
+    <div class="workspace-top-actions">
+        @include('notifications.bell', ['indexRoute' => route('notifications.index'), 'readRouteName' => 'notifications.read', 'readAllRoute' => route('notifications.read-all')])
+        <details class="profile-menu">
+            <summary class="profile-trigger" aria-label="Open profile menu"><span class="profile-name">{{ auth()->user()->name }}</span></summary>
+            <div class="profile-dropdown"><a href="{{ route('dashboard') }}">My dashboard</a><a href="{{ route('dashboard.profile') }}">Profile</a><a href="{{ route('dashboard.settings') }}">Settings</a></div>
+        </details>
+        <form method="POST" action="{{ route('logout') }}">@csrf<button class="workspace-logout" type="submit">Log out</button></form>
+    </div>
 </header>
 <div class="dashboard-shell">
     <aside class="dashboard-rail">
@@ -17,7 +25,7 @@
             <a class="dashboard-mark" href="{{ route('dashboard') }}">Little <span>Steps</span></a>
             <p class="dashboard-greeting">Your private learning space</p>
         </div>
-        <details class="workspace-sidebar-menu">
+        <details class="workspace-sidebar-menu" open>
             <summary><span>Workspace menu</span><span aria-hidden="true">⌄</span></summary>
             <nav class="dashboard-nav" aria-label="Learning space navigation">
                 <a href="{{ route('dashboard') }}" @if(request()->routeIs('dashboard')) aria-current="page" @endif>Dashboard</a>
@@ -31,19 +39,12 @@
         </details>
         <div class="workspace-sidebar-foot"><span class="workspace-status-dot" aria-hidden="true"></span><span>Private family space</span></div>
     </aside>
-    <main class="dashboard-main">
+    <main class="dashboard-main {{ request()->routeIs('dashboard.progress') ? 'progress-page' : '' }}">
         <header class="dashboard-topbar">
             <div><small>Little Steps learning space</small><h1>@yield('heading', 'Welcome back')</h1></div>
-            @include('notifications.bell', ['indexRoute' => route('notifications.index'), 'readRouteName' => 'notifications.read', 'readAllRoute' => route('notifications.read-all')])
-            <details class="profile-menu">
-                <summary class="profile-trigger" aria-label="Open profile menu">
-                    @if (auth()->user()->parentProfile?->profile_picture_path)<img src="{{ route('dashboard.profile.picture') }}" alt="Profile picture">@else<span>{{ strtoupper(substr(auth()->user()->first_name ?: auth()->user()->name, 0, 1)) }}</span>@endif
-                </summary>
-                <div class="profile-dropdown"><a href="{{ route('dashboard') }}">My dashboard</a><a href="{{ route('dashboard.profile') }}">Profile</a><a href="{{ route('dashboard.settings') }}">Settings</a><form method="POST" action="{{ route('logout') }}">@csrf<button type="submit">Logout</button></form></div>
-            </details>
         </header>
-        @if(session('status'))<div class="notice success">{{ session('status') }}</div>@endif
-        @if($errors->any())<div class="notice error">{{ $errors->first() }}</div>@endif
+        @if(session('status'))<div class="site-feedback site-feedback--success" role="status">{{ session('status') }}</div>@endif
+        @if($errors->any())<div class="site-feedback site-feedback--error" role="alert">{{ $errors->first() }}</div>@endif
         @yield('dashboard-content')
     </main>
 </div>

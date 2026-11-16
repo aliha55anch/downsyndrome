@@ -1,0 +1,66 @@
+/* Public doctor profile: a focused profile page without the auth side banner. */
+.doctor-profile-page { --dp-ink: #203844; --dp-muted: #627780; --dp-line: #dbe5e8; --dp-teal: #176a78; }
+.doctor-public-profile { min-height: 70vh; padding: 32px 0 clamp(56px,7vw,88px); }
+.doctor-profile-container { max-width: 1180px; }
+.doctor-profile-back { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 19px; color: #39766f; font-size: .9rem; font-weight: 800; text-decoration: none; }
+.doctor-profile-back:hover { color: #124d59; text-decoration: underline; }
+.doctor-profile-hero { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 28px; overflow: hidden; margin-bottom: 24px; padding: clamp(25px,4vw,42px); border: 1px solid rgba(255,255,255,.2); border-radius: 24px; background: radial-gradient(circle at 88% 14%,rgba(45,212,191,.2),transparent 34%),linear-gradient(125deg,#0b2038 0%,#103846 53%,#176a78 100%); color: #fff; box-shadow: 0 18px 42px rgba(15,37,64,.15); }
+.doctor-profile-hero::after { position: absolute; right: -80px; bottom: -220px; width: 400px; height: 400px; border: 1px solid rgba(255,255,255,.15); border-radius: 50%; content: ""; pointer-events: none; }
+.doctor-profile-identity { position: relative; z-index: 1; display: flex; min-width: 0; align-items: center; gap: clamp(20px,3vw,34px); }
+.doctor-profile-photo { display: grid; width: clamp(100px,13vw,150px); height: clamp(100px,13vw,150px); flex: 0 0 auto; place-items: center; border: 4px solid rgba(255,255,255,.68); border-radius: 50%; background: #e8f3f0; color: #176a78; object-fit: cover; box-shadow: 0 9px 24px rgba(0,0,0,.2); }
+.doctor-profile-photo--placeholder { font-family: var(--font-heading); font-size: clamp(2.8rem,6vw,4.4rem); font-weight: 800; }
+.doctor-profile-heading-copy { min-width: 0; }
+.doctor-profile-heading-copy h1 { max-width: 20ch; margin: 12px 0 5px; color: #fff; font-family: var(--font-heading); font-size: clamp(1.85rem,3.8vw,3rem); letter-spacing: -.045em; line-height: 1.08; }
+.doctor-profile-specialty { margin: 0; color: #f8c768; font-size: 1.05rem; font-weight: 700; }
+.doctor-profile-facts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+.doctor-profile-facts span { display: inline-flex; align-items: center; min-height: 30px; padding: 5px 10px; border: 1px solid rgba(255,255,255,.18); border-radius: 999px; background: rgba(255,255,255,.08); color: #e3eff0; font-size: .82rem; }
+.doctor-verified-badge { display: inline-flex; align-items: center; gap: 7px; padding: 6px 10px; border: 1px solid rgba(253,230,138,.42); border-radius: 999px; background: rgba(245,158,11,.14); color: #ffe19a; font-size: .76rem; font-weight: 900; letter-spacing: .035em; text-transform: uppercase; }
+.doctor-verified-badge span { display: grid; width: 17px; height: 17px; place-items: center; border-radius: 50%; background: #fbbf24; color: #263d44; font-size: .72rem; }
+.doctor-profile-hero-actions { position: relative; z-index: 1; flex: 0 0 auto; }
+.doctor-booking-unavailable { display: inline-flex; max-width: 220px; padding: 10px 13px; border: 1px solid rgba(255,255,255,.24); border-radius: 12px; background: rgba(255,255,255,.09); color: #e3eff0; font-size: .84rem; line-height: 1.45; }
+.doctor-public-grid { display: grid; grid-template-columns: minmax(0,1.12fr) minmax(320px,.88fr); align-items: start; gap: 22px; }
+.doctor-profile-main-column,.doctor-profile-sidebar { display: grid; min-width: 0; gap: 18px; }
+.doctor-profile-card { min-width: 0; padding: clamp(21px,3vw,30px); border: 1px solid rgba(15,37,64,.09); border-radius: 18px; background: #fff; box-shadow: 0 10px 30px rgba(15,37,64,.065); }
+.doctor-profile-kicker { display: block; margin-bottom: 6px; color: #39766f; font-size: .72rem; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; }
+.doctor-profile-card h2 { margin: 0 0 12px; color: #17374b; font-family: var(--font-heading); font-size: clamp(1.18rem,2vw,1.45rem); letter-spacing: -.025em; }
+.doctor-profile-biography,.doctor-profile-card > p { margin: 0; color: #536b73; line-height: 1.8; overflow-wrap: anywhere; }
+.doctor-profile-qualifications { display: grid; gap: 9px; margin: 0; padding: 0; list-style: none; }
+.doctor-profile-qualifications li { display: grid; gap: 3px; padding: 13px 14px; border: 1px solid #e5edef; border-radius: 12px; background: #f9fbfb; }
+.doctor-profile-qualifications strong { color: #294752; }
+.doctor-profile-qualifications span { color: #687b82; font-size: .9rem; line-height: 1.5; }
+.doctor-profile-languages { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 17px; padding-top: 14px; border-top: 1px solid #e8eff0; color: #536b73; }
+.doctor-profile-languages strong { color: #294752; }
+.doctor-consultation-card { border-color: #d3e6e4; background: linear-gradient(145deg,#fff 20%,#f3f9f7); }
+.doctor-consultation-options { display: grid; gap: 9px; margin: 2px 0 16px; }
+.doctor-consultation-option { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 13px; border: 1px solid #dfe9e9; border-radius: 12px; background: rgba(255,255,255,.88); }
+.doctor-consultation-option > div { display: grid; gap: 3px; }
+.doctor-consultation-option strong { color: #294752; font-size: .92rem; }
+.doctor-consultation-option span { color: #718187; font-size: .82rem; }
+.doctor-consultation-option b { color: #176a78; font-size: .89rem; text-align: right; }
+.doctor-booking-button { display: flex; width: 100%; min-height: 48px; }
+.doctor-booking-button[disabled] { opacity: .58; cursor: not-allowed; }
+.doctor-profile-muted { margin: 7px 0 12px !important; color: #718187 !important; font-size: .86rem; line-height: 1.6 !important; }
+.doctor-profile-contact-card h2:not(:first-of-type) { margin-top: 20px; }
+.doctor-profile-contact-card a:not(.doctor-contact-link) { color: #176a78; overflow-wrap: anywhere; }
+.doctor-contact-link { display: inline-flex; margin: 3px 0 7px; color: #176a78; font-size: .88rem; font-weight: 800; text-decoration: none; }
+.doctor-availability-list { display: grid; gap: 7px; margin: 0 0 12px; padding: 0; list-style: none; }
+.doctor-availability-list li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 9px 11px; border: 1px solid #e7edef; border-radius: 10px; background: #fbfdfd; font-size: .86rem; }
+.doctor-availability-list strong { color: #405a64; }
+.doctor-availability-list span { color: #627780; text-align: right; }
+@media (max-width: 850px) {
+  .doctor-public-grid { grid-template-columns: minmax(0,1fr); }
+  .doctor-profile-sidebar { grid-template-columns: repeat(2,minmax(0,1fr)); align-items: start; }
+  .doctor-consultation-card { grid-column: 1 / -1; }
+}
+@media (max-width: 600px) {
+  .doctor-public-profile { padding-top: 20px; }
+  .doctor-profile-hero { align-items: flex-start; flex-direction: column; gap: 20px; padding: 22px 18px; border-radius: 18px; }
+  .doctor-profile-identity { align-items: flex-start; flex-direction: column; gap: 15px; }
+  .doctor-profile-photo { width: 96px; height: 96px; }
+  .doctor-profile-heading-copy h1 { margin-top: 9px; }
+  .doctor-profile-hero-actions,.doctor-profile-hero-actions .pc-cta { width: 100%; }
+  .doctor-profile-sidebar { grid-template-columns: minmax(0,1fr); }
+  .doctor-consultation-card { grid-column: auto; }
+  .doctor-consultation-option { align-items: flex-start; flex-direction: column; }
+  .doctor-consultation-option b { text-align: left; }
+}

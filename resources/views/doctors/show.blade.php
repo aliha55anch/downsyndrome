@@ -1,8 +1,17 @@
-@extends('layouts.auth')
+@extends('layouts.public')
 @section('title', $profile->professional_title.' '.$profile->user->name)
+@section('body_class', 'consultancy-page doctor-profile-page')
+
+@push('styles')
+    <link rel="stylesheet" href="{{ asset('assets/css/consultancy.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/css/doctor-profile.css') }}">
+@endpush
+
 @section('content')
-<main class="container section public-doctor-profile">
-    <a href="{{ route('doctors.index') }}">← All doctors</a>
+<section class="doctor-public-profile">
+    <div class="container doctor-profile-container">
+        <a class="doctor-profile-back" href="{{ route('doctors.index') }}"><span aria-hidden="true">←</span> All doctors</a>
     @include('doctors._profile-content', ['profile' => $profile])
-</main>
+    </div>
+</section>
 @endsection

@@ -1,6 +1,11 @@
 @extends('layouts.dashboard')
 @section('heading', 'My Dashboard')
 @section('dashboard-content')
+<section class="family-welcome" aria-labelledby="family-welcome-title">
+    <div class="family-welcome-copy"><span class="eyebrow">Your family space</span><h2 id="family-welcome-title">Welcome, {{ $user->first_name ?: $user->name }}</h2><p>Small steps add up. Pick up an activity, check your child’s progress, or find support for your family.</p></div>
+    <div class="family-welcome-actions"><a class="btn btn-blue" href="{{ route('activities.index') }}">Explore activities</a><a class="family-welcome-link" href="{{ route('dashboard.children.index') }}">Manage children <span aria-hidden="true">→</span></a></div>
+</section>
+
 @if ($needsProfile)
     <section class="welcome-card"><div><span class="eyebrow">Family setup</span><h2>Add a child profile to personalize progress</h2><p>You can browse and enroll in activities now, then connect progress to a child later.</p></div><div class="btn-row"><a class="btn btn-blue" href="{{ route('dashboard.profile') }}">Complete profile</a><a class="btn btn-outline" href="{{ route('dashboard.progress') }}">Add later</a></div></section>
 @endif

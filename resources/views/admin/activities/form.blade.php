@@ -3,9 +3,9 @@
 @section('title', 'Edit Activity')
 
 @section('content')
-<div class="page-title"><h1>Edit activity</h1><p>Update the basic activity information, then continue managing lessons below.</p></div>
+<div class="page-title admin-dashboard-heading admin-activity-editor-heading"><div><span class="eyebrow">Learning library</span><h1>Edit activity</h1><p>Update the activity details, manage its publication status, and organize lessons.</p></div><a class="btn btn-outline" href="{{ route('admin.activities.index') }}">Back to activities</a></div>
 
-<form method="POST" action="{{ route('admin.activities.update', $activity) }}" enctype="multipart/form-data" class="form-box" data-activity-form>
+<form method="POST" action="{{ route('admin.activities.update', $activity) }}" enctype="multipart/form-data" class="form-box admin-activity-form" data-activity-form>
     @csrf
     @method('PUT')
     <label for="title">Activity title</label>
@@ -25,6 +25,14 @@
 
     <label for="short_description">Short description</label>
     <input id="short_description" name="short_description" value="{{ old('short_description', $activity->short_description) }}" maxlength="500" required>
+
+    <fieldset class="activity-video-fields"><legend>Activity video <span class="hint">Optional: add one video upload or a YouTube link</span></legend>
+        <label for="activity_video">Upload video <span class="hint">MP4, WebM, or OGG; maximum 50 MB</span></label>
+        <input type="file" id="activity_video" name="activity_video" accept="video/mp4,video/webm,video/ogg,.ogv">
+        @if($activity->video_path)<p class="hint">A video is currently saved. Upload a replacement or remove it below.</p><label class="inline-check"><input type="checkbox" name="remove_activity_video" value="1"> Remove current video</label>@endif
+        <label for="youtube_url">Or paste a YouTube link</label>
+        <input type="url" id="youtube_url" name="youtube_url" value="{{ old('youtube_url', $activity->youtube_url) }}" placeholder="https://www.youtube.com/watch?v=…">
+    </fieldset>
 
     <div class="btn-row"><button class="btn btn-blue" type="submit">Save activity</button><a class="btn btn-outline" href="{{ route('admin.activities.index') }}">Cancel</a></div>
 </form>

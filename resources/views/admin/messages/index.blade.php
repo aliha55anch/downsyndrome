@@ -3,41 +3,36 @@
 @section('title', 'Contact Messages')
 
 @section('content')
-<div class="page-title">
-    <h1>Contact Messages</h1>
-    <p>Messages submitted through the public contact form.</p>
+<div class="page-title admin-dashboard-heading admin-messages-heading">
+    <div><span class="eyebrow">Family support inbox</span><h1>Contact Messages</h1><p>Review and manage messages submitted through the public contact form.</p></div>
+    <span class="admin-users-count">{{ $messages->total() }} {{ \Illuminate\Support\Str::plural('message', $messages->total()) }}</span>
 </div>
 
-<div class="btn-row">
-    <a class="btn {{ $unread ? 'btn-blue' : 'btn-outline' }}" href="{{ route('admin.messages.index', ['unread' => 1]) }}">Unread only</a>
-    <a class="btn {{ ! $unread ? 'btn-blue' : 'btn-outline' }}" href="{{ route('admin.messages.index') }}">All messages</a>
-</div>
+<nav class="admin-message-tabs" aria-label="Filter contact messages">
+    <a class="{{ $unread ? '' : 'is-active' }}" href="{{ route('admin.messages.index') }}" @if(! $unread) aria-current="page" @endif>All messages</a>
+    <a class="{{ $unread ? 'is-active' : '' }}" href="{{ route('admin.messages.index', ['unread' => 1]) }}" @if($unread) aria-current="page" @endif>Unread only</a>
+</nav>
 
-<div class="table-wrap">
-    <table>
-        <thead><tr><th>Subject</th><th>Sender</th><th>Submitted</th><th>Status</th><th>Actions</th></tr></thead>
-        <tbody>
-        @forelse ($messages as $message)
-            <tr>
-                <td>{{ $message->subject }}</td>
-                <td>{{ $message->name }}<br><span class="muted">{{ $message->email }}</span></td>
-                <td>{{ $message->created_at->format('Y-m-d H:i') }}</td>
-                <td>{{ $message->is_read ? 'Read' : 'Unread' }}</td>
-                <td>
-                    <a class="btn btn-outline btn-small" href="{{ route('admin.messages.show', $message) }}">View</a>
-                    <form method="POST" action="{{ route('admin.messages.read', $message) }}" style="display:inline;">
-                        @csrf
-                        @method('PATCH')
-                        <button class="btn btn-blue btn-small" type="submit">Mark {{ $message->is_read ? 'unread' : 'read' }}</button>
-                    </form>
-                </td>
-            </tr>
-        @empty
-            <tr><td colspan="5">No contact messages yet.</td></tr>
-        @endforelse
-        </tbody>
-    </table>
-</div>
-
-{{ $messages->links() }}
+<section class="admin-panel admin-messages-panel">
+    <div class="panel-heading"><div><span class="eyebrow">Inbox</span><h2>{{ $unread ? 'Unread messages' : 'Recent messages' }}</h2><p>Open a message to read it and update its status.</p></div></div>
+    <div class="table-wrap admin-messages-table-wrap">
+        <table class="admin-messages-table">
+            <thead><tr><th scope="col">Subject</th><th scope="col">Sender</th><th scope="col">Submitted</th><th scope="col">Status</th><th scope="col">Actions</th></tr></thead>
+            <tbody>
+            @forelse ($messages as $message)
+                <tr>
+                    <td class="admin-message-subject"><strong>{{ $message->subject }}</strong></td>
+                    <td class="admin-message-sender"><strong>{{ $message->name }}</strong><a href="mailto:{{ $message->email }}">{{ $message->email }}</a></td>
+                    <td><time datetime="{{ $message->created_at->toIso8601String() }}">{{ $message->created_at->format('M j, Y') }}<span>{{ $message->created_at->format('g:i A') }}</span></time></td>
+                    <td><span class="admin-message-status {{ $message->is_read ? 'is-read' : 'is-unread' }}">{{ $message->is_read ? 'Read' : 'Unread' }}</span></td>
+                    <td><div class="admin-message-actions"><a class="btn btn-outline btn-small" href="{{ route('admin.messages.show', $message) }}">Open message</a><form method="POST" action="{{ route('admin.messages.read', $message) }}">@csrf @method('PATCH')<button class="btn btn-blue btn-small" type="submit">Mark {{ $message->is_read ? 'unread' : 'read' }}</button></form><form method="POST" action="{{ route('admin.messages.destroy', $message) }}" onsubmit="return confirm('Delete this contact message? This cannot be undone.');">@csrf @method('DELETE')<button class="btn btn-red btn-small" type="submit">Delete</button></form></div></td>
+                </tr>
+            @empty
+                <tr><td class="admin-messages-empty" colspan="5">{{ $unread ? 'You are all caught up. There are no unread messages.' : 'No contact messages have been received yet.' }}</td></tr>
+            @endforelse
+            </tbody>
+        </table>
+    </div>
+    {{ $messages->links() }}
+</section>
 @endsection

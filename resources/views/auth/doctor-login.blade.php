@@ -1,6 +1,7 @@
 @extends('layouts.auth')
 
 @section('title', 'Doctor login')
+@section('shell_class', 'auth-shell--simple')
 
 @section('story_eyebrow', 'Professional network')
 @section('story_heading', 'Care that families can trust.')
